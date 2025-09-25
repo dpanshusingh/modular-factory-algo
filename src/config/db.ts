@@ -1,27 +1,28 @@
-import { Pool } from "pg";
-import dotenv from "dotenv";
-import { ENV } from "./envConfig";
-dotenv.config();
+import { PrismaClient } from '@prisma/client';
 
-export const pool = new Pool({
-    user: ENV.DB_USER,
-    host: ENV.DB_HOST,
-    database: ENV.DB_NAME,
-    password: ENV.DB_PASS,
-    port: Number(ENV.DB_PORT) || 5432,
-    ssl: {
-        rejectUnauthorized: false, // required if using public IP
-    },
+
+// Create a single instance of PrismaClient
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
 });
 
-// Function to test connection
+export { prisma };
+
 export async function connectDB() {
     try {
-        const client = await pool.connect();
-        console.log("✅ PostgreSQL connected successfully!");
-        client.release();
+        await prisma.$connect();
+        console.log("✅ PostgreSQL connected successfully with Prisma!");
     } catch (err) {
         console.error("❌ Error connecting to PostgreSQL:", err);
         process.exit(1);
+    }
+}
+
+export async function disconnectDB() {
+    try {
+        await prisma.$disconnect();
+        console.log("✅ PostgreSQL disconnected successfully!");
+    } catch (err) {
+        console.error("❌ Error disconnecting from PostgreSQL:", err);
     }
 }
