@@ -36,6 +36,7 @@ export const timelogFiltersSchema = yup.object().shape({
     .optional(),
 });
 
+
 export const validateCreateTimelog = async (data: CreateTimelogRequest) => {
   try {
     return await createTimelogSchema.validate(data, { abortEarly: false });

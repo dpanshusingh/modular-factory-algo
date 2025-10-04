@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+
 // Required environment variables
 if (!process.env.PORT) throw new Error("PORT is not defined");
 if (!process.env.CORS_ORIGIN) throw new Error("CORS_ORIGIN is not defined");

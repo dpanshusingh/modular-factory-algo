@@ -3,24 +3,23 @@ import { User, CreateUserRequest } from '../types/@server';
 
 export const createUser = async (userData: CreateUserRequest): Promise<User> => {
   const { email, firstname, lastname, role } = userData;
-  
-  try {
-    const user = await prisma.user.create({
-      data: {
-        email,
-        firstname,
-        lastname,
-        role,
-      },
-    });
-    return user;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('Unique constraint')) {
-      throw new Error('User with this email already exists');
-    }
-    throw error;
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+  if (existingUser) {
+    throw new Error('User with this email already exists');
   }
+  const user = await prisma.user.create({
+    data: {
+      email,
+      firstname,
+      lastname,
+      role,
+    },
+  });
+  return user;
 };
+
 
 export const getAllUsers = async (): Promise<User[]> => {
   try {

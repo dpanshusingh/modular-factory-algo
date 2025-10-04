@@ -19,7 +19,7 @@ export const authenticateToken = async (
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-    
+    console.log(authHeader)
 
     if (!token) {
       const error: CustomError = new Error('Access token required');

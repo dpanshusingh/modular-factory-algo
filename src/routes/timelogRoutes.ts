@@ -6,7 +6,9 @@ import {
   updateTimelogController,
   deleteTimelogController,
   getTimelogsByEmployeeController,
-  exportTimelogsController 
+  exportTimelogsController, 
+  getTimelogsFilterController,
+  filteredEmployeeTimelogController
 } from '../controllers/timelogController';
 import { authenticateToken } from '../middlewares/authMiddleware';
 import { apiLimiter } from '../middlewares/rateLimiter';
@@ -34,10 +36,14 @@ router.get('/:id', getTimelogByIdController);
 // POST /api/timelogs - Create new timelog
 router.post('/', createTimelogController);
 
+router.post('/employee/filtered-timelogs', filteredEmployeeTimelogController);
+
 // PUT /api/timelogs/:id - Update timelog
 router.put('/:id', updateTimelogController);
 
 // DELETE /api/timelogs/:id - Delete timelog
 router.delete('/:id', deleteTimelogController);
+
+router.get('/timelogs-filter/:start/:end', getTimelogsFilterController);
 
 export { router as timelogRoutes };

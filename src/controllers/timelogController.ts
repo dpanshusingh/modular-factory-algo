@@ -1,12 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
-import { 
-  createTimelog, 
-  getTimelogs, 
-  getTimelogsForExport, 
+import {
+  createTimelog,
+  getTimelogs,
+  getTimelogsForExport,
   getTimelogById,
   updateTimelog,
   deleteTimelog,
-  getTimelogsByEmployee
+  getTimelogsByEmployee,
+  getFilteredTimelogs,
+  getEmployeeFilteredTimeLogs
 } from '../models/timelogModel';
 import { validateCreateTimelog, validateTimelogFilters } from '../utils/validators/timelogValidator';
 import { exportTimelogsToCSV, formatCSVResponse } from '../utils/csvExporter';
@@ -21,18 +23,49 @@ export const createTimelogController = async (
   try {
     const validatedData = await validateCreateTimelog(req.body);
     const timelog = await createTimelog(validatedData);
-    
+
     const response: ApiResponse<Timelog> = {
       success: true,
       message: 'Timelog created successfully',
       data: timelog,
     };
-    
+
     res.status(201).json(response);
   } catch (error) {
     next(error);
   }
 };
+
+
+export const filteredEmployeeTimelogController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { start, end, employee_id } = req.body;
+    if (!start || !end || !employee_id) {
+      res.status(401).json({
+        success: false,
+        message: "All fields are required",
+      })
+    }
+    const filteredTimeLogs = await getEmployeeFilteredTimeLogs({
+      start, end, employee_id
+    })
+
+    return res.status(200).json(
+      {
+        success: true,
+        data: filteredTimeLogs
+      }
+    )
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 export const getTimelogsController = async (
   req: Request,
@@ -45,18 +78,18 @@ export const getTimelogsController = async (
       end: req.query.end as string,
       employee_id: req.query.employee_id as string,
     };
-    
+
     // Validate filters
     const validatedFilters = await validateTimelogFilters(filters);
-    
+
     const timelogs = await getTimelogs(validatedFilters);
-    
+
     const response: ApiResponse<Timelog[]> = {
       success: true,
       message: 'Timelogs retrieved successfully',
       data: timelogs,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -71,27 +104,27 @@ export const getTimelogByIdController = async (
   try {
     const { id } = req.params;
     const timelogId = parseInt(id);
-    
+
     if (isNaN(timelogId)) {
       const error: CustomError = new Error('Invalid timelog ID');
       error.status = 400;
       throw error;
     }
-    
+
     const timelog = await getTimelogById(timelogId);
-    
+
     if (!timelog) {
       const error: CustomError = new Error('Timelog not found');
       error.status = 404;
       throw error;
     }
-    
+
     const response: ApiResponse<Timelog> = {
       success: true,
       message: 'Timelog retrieved successfully',
       data: timelog,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -106,21 +139,21 @@ export const updateTimelogController = async (
   try {
     const { id } = req.params;
     const timelogId = parseInt(id);
-    
+
     if (isNaN(timelogId)) {
       const error: CustomError = new Error('Invalid timelog ID');
       error.status = 400;
       throw error;
     }
-    
+
     const timelog = await updateTimelog(timelogId, req.body);
-    
+
     const response: ApiResponse<Timelog> = {
       success: true,
       message: 'Timelog updated successfully',
       data: timelog,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -135,20 +168,20 @@ export const deleteTimelogController = async (
   try {
     const { id } = req.params;
     const timelogId = parseInt(id);
-    
+
     if (isNaN(timelogId)) {
       const error: CustomError = new Error('Invalid timelog ID');
       error.status = 400;
       throw error;
     }
-    
+
     await deleteTimelog(timelogId);
-    
+
     const response: ApiResponse = {
       success: true,
       message: 'Timelog deleted successfully',
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -163,21 +196,21 @@ export const getTimelogsByEmployeeController = async (
   try {
     const { employeeId } = req.params;
     const empId = parseInt(employeeId);
-    
+
     if (isNaN(empId)) {
       const error: CustomError = new Error('Invalid employee ID');
       error.status = 400;
       throw error;
     }
-    
+
     const timelogs = await getTimelogsByEmployee(empId);
-    
+
     const response: ApiResponse<Timelog[]> = {
       success: true,
       message: 'Timelogs retrieved successfully',
       data: timelogs,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
@@ -195,12 +228,12 @@ export const exportTimelogsController = async (
       end: req.query.end as string,
       employee_id: req.query.employee_id as string,
     };
-    
+
     // Validate filters
     const validatedFilters = await validateTimelogFilters(filters);
-    
+
     const timelogs = await getTimelogsForExport(validatedFilters);
-    
+
     if (timelogs.length === 0) {
       const response: ApiResponse = {
         success: false,
@@ -208,12 +241,30 @@ export const exportTimelogsController = async (
       };
       return res.status(404).json(response);
     }
-    
+
     const csvContent = exportTimelogsToCSV(timelogs);
     const csvResponse = formatCSVResponse(csvContent, 'timelogs');
-    
+
     res.set(csvResponse.headers);
     res.send(csvResponse.content);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const getTimelogsFilterController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { start, end } = req.params;
+    if (!start || !end) {
+      return res.status(400).json({ message: "Start and end query parameters are required" });
+    }
+    const timelogs = await getFilteredTimelogs(start as string, end as string);
+    return res.status(200).json({ data: timelogs });
   } catch (error) {
     next(error);
   }

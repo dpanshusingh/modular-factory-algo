@@ -59,7 +59,7 @@ export const getEmployeeByEmail = async (email: string): Promise<Employee | null
 export const updateEmployee = async (id: number, employeeData: Partial<CreateEmployeeRequest>): Promise<Employee> => {
   try {
     const employee = await prisma.employee.update({
-      where: { id },
+      where: { id:id },
       data: employeeData,
     });
     return employee;

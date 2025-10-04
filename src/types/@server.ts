@@ -5,8 +5,9 @@ export interface User {
   lastname: string;
   role: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date; // acts as last_activity
 }
+
 
 export interface Employee {
   id: number;
