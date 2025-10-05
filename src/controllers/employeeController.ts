@@ -1,66 +1,66 @@
 import { Request, Response, NextFunction } from 'express';
-import { auth, firestore as db } from '../utils/firebase';
+import { firestore as db, authAdmin } from '../utils/firebase';
 import { ApiResponse } from '../types/@server';
 import { CustomError } from '../types/customErrorInterface';
 import { validateCreateEmployee } from '../utils/validators/employeeValidator';
+import { attachAuthToUser } from '../models/timelogModel';
 
 export const USERS_COLLECTION = 'users';
 
+// =========================================
+// CREATE EMPLOYEE
+// =========================================
 export const createEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("req.body",req.body)
     const validatedData = await validateCreateEmployee(req.body);
-    const newUserRef = await db.collection(USERS_COLLECTION).add({
+
+    const newUserRef = db.collection(USERS_COLLECTION).doc(); // custom doc ID
+    await newUserRef.set({
       ...validatedData,
       create_date: new Date(),
       update_date: new Date(),
+      document_id: newUserRef.id, // ✅ store document_id
     });
 
-    const newUser = await newUserRef.get();
+    //const newUserSnap = await newUserRef.get();
+    // const enrichedUser = await attachAuthToUser({
+    //   document_id: newUserRef.id,
+    //   ...(newUserSnap.data() as any),
+    // });
 
     const response: ApiResponse = {
       success: true,
       message: 'Employee created successfully',
-      data: { id: newUserRef.id, ...newUser.data() },
+      //data: enrichedUser,
     };
+
     res.status(201).json(response);
   } catch (error) {
     next(error);
   }
 };
 
+// =========================================
+// GET ALL EMPLOYEES
+// =========================================
 export const getAllEmployeesController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const snapshot = await db.collection(USERS_COLLECTION).get();
-    const employees = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const employees = snapshot.docs.map((doc) => ({
+      document_id: doc.id,
+      ...(doc.data() as any),
+    }));
 
-    // Fetch auth user details for each employee's user_id
-    const employeesWithAuthData = await Promise.all(
-      employees.map(async (employee: any) => {
-        try {
-          const userRecord = await auth.getUser(employee.user_id);
-          return {
-            ...employee,
-            auth: {
-              uid: userRecord.uid,
-              email: userRecord.email,
-              emailVerified: userRecord.emailVerified,
-              disabled: userRecord.disabled,
-              lastSignInTime: userRecord.metadata.lastSignInTime,
-              creationTime: userRecord.metadata.creationTime,
-              providerData: userRecord.providerData,
-            },
-          };
-        } catch (error) {
-          // If user not found in Auth, still return employee data
-          return { ...employee, auth: null };
-        }
-      })
+    // ✅ Enrich each with lead_types and auth_email
+    const enrichedEmployees = await Promise.all(
+      employees.map(async (emp) => await attachAuthToUser(emp))
     );
 
     const response: ApiResponse = {
       success: true,
       message: 'Employees retrieved successfully',
-      data: employeesWithAuthData,
+      data: enrichedEmployees,
     };
 
     res.status(200).json(response);
@@ -69,60 +69,75 @@ export const getAllEmployeesController = async (req: Request, res: Response, nex
   }
 };
 
+// =========================================
+// GET EMPLOYEE BY ID (document_id)
+// =========================================
 export const getEmployeeByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const docRef = db.collection(USERS_COLLECTION).doc(id);
-    const doc = await docRef.get();
 
-    if (!doc.exists) {
+    const docSnap = await db.collection(USERS_COLLECTION).doc(id).get();
+    if (!docSnap.exists) {
       const error: CustomError = new Error('Employee not found');
       error.status = 404;
       throw error;
     }
 
+    const userData = { document_id: docSnap.id, ...(docSnap.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
+
     const response: ApiResponse = {
       success: true,
       message: 'Employee retrieved successfully',
-      data: { id: doc.id, ...doc.data() },
+      data: enrichedUser,
     };
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
+// =========================================
+// GET EMPLOYEE BY EMAIL
+// =========================================
 export const getEmployeeByEmailController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.params;
-    const snapshot = await db.collection(USERS_COLLECTION).where('email', '==', email).get();
 
+    const snapshot = await db.collection(USERS_COLLECTION).where('email', '==', email).limit(1).get();
     if (snapshot.empty) {
       const error: CustomError = new Error('Employee not found');
       error.status = 404;
       throw error;
     }
 
-    const employee = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))[0];
+    const doc = snapshot.docs[0];
+    const userData = { document_id: doc.id, ...(doc.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
 
     const response: ApiResponse = {
       success: true,
       message: 'Employee retrieved successfully',
-      data: employee,
+      data: enrichedUser,
     };
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
+// =========================================
+// UPDATE EMPLOYEE
+// =========================================
 export const updateEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const docRef = db.collection(USERS_COLLECTION).doc(id);
-    const doc = await docRef.get();
 
-    if (!doc.exists) {
+    const docRef = db.collection(USERS_COLLECTION).doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
       const error: CustomError = new Error('Employee not found');
       error.status = 404;
       throw error;
@@ -133,22 +148,29 @@ export const updateEmployeeController = async (req: Request, res: Response, next
       update_date: new Date(),
     });
 
-    const updatedDoc = await docRef.get();
+    const updatedSnap = await docRef.get();
+    const userData = { document_id: updatedSnap.id, ...(updatedSnap.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
 
     const response: ApiResponse = {
       success: true,
       message: 'Employee updated successfully',
-      data: { id: updatedDoc.id, ...updatedDoc.data() },
+      data: enrichedUser,
     };
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
+// =========================================
+// DELETE EMPLOYEE
+// =========================================
 export const deleteEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+
     await db.collection(USERS_COLLECTION).doc(id).delete();
 
     const response: ApiResponse = {
@@ -162,6 +184,9 @@ export const deleteEmployeeController = async (req: Request, res: Response, next
   }
 };
 
+// =========================================
+// GET EMPLOYEES BY CREW (lead_type_id)
+// =========================================
 export const getEmployeesByCrewController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { crewId } = req.params;
@@ -177,13 +202,21 @@ export const getEmployeesByCrewController = async (req: Request, res: Response, 
       .where('lead_type_ids', 'array-contains', crewId)
       .get();
 
-    const employees = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    const employees = snapshot.docs.map((doc) => ({
+      document_id: doc.id,
+      ...(doc.data() as any),
+    }));
+
+    const enrichedEmployees = await Promise.all(
+      employees.map(async (emp) => await attachAuthToUser(emp))
+    );
 
     const response: ApiResponse = {
       success: true,
       message: 'Employees retrieved successfully',
-      data: employees,
+      data: enrichedEmployees,
     };
+
     res.status(200).json(response);
   } catch (error) {
     next(error);

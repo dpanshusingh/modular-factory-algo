@@ -2,16 +2,24 @@ import * as yup from 'yup';
 import { CreateEmployeeRequest } from '../../types/@server';
 
 export const createEmployeeSchema = yup.object().shape({
-  name: yup
+  first_name: yup
     .string()
     .min(2, 'Name must be at least 2 characters')
     .max(100, 'Name must be less than 100 characters')
-    .required('Name is required'),
+    .required('First name is required'),
+  last_name: yup
+    .string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(100, 'Name must be less than 100 characters')
+    .required('Last name is required'),
+  role: yup
+    .string()
+    .required('role is required'),
   email: yup
     .string()
     .email('Must be a valid email')
     .optional(),
-  crews: yup
+    lead_type_ids: yup
     .array()
     .of(yup.string())
     .min(1, 'At least one crew must be assigned')

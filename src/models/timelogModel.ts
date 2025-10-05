@@ -6,6 +6,20 @@ import { firestore as db, authAdmin } from '../utils/firebase'; // <— ensure y
 
 const USERS = 'users';
 
+const LEAD_TYPES = 'leadTypes';
+
+// Fetch multiple lead types by IDs
+const getLeadTypesByIds = async (ids?: string[]): Promise<any[]> => {
+  if (!ids || !ids.length) return [];
+  //console.log('ids', ids);
+  const snaps = await Promise.all(
+    ids.map(id => db.collection(LEAD_TYPES).doc(id).get())
+  );
+  return snaps
+    .filter(s => s.exists)
+    .map(s => ({ document_id: s.id, ...(s.data() as any) }));
+};
+
 // ---- helpers ----
 const userFromSnap = (snap: FirebaseFirestore.DocumentSnapshot): UserDoc | null =>
   snap.exists ? ({ document_id: snap.id, ...(snap.data() as any) }) : null;
@@ -22,11 +36,18 @@ const getAuthEmailByUID = async (uid?: string | null): Promise<string | null> =>
 };
 
 // Attach auth email to user object
-const attachAuthToUser = async <T extends UserDoc | null>(u: T): Promise<T extends null ? null : (T & { auth_email?: string | null })> => {
+export const attachAuthToUser = async <T extends UserDoc | null>(
+  u: T
+): Promise<T extends null ? null : (T & { auth_email?: string | null; lead_types?: any[] })> => {
+  //console.log('u', u);
   if (!u) return null as any;
-  // prefer explicit user_id field, else fallback to uid if you store it
-  const auth_email = await getAuthEmailByUID((u as any).user_id || (u as any).uid);
-  return { ...(u as any), auth_email } as any;
+
+  //const auth_email = await getAuthEmailByUID((u as any).user_id || (u as any).uid);
+  const lead_types = await getLeadTypesByIds((u as any).lead_type_ids);
+  //console.log('lead_types', lead_types);
+  return { ...(u as any), 
+    //auth_email, 
+    lead_types } as any;
 };
 
 const pickWorkersQuery = () =>
@@ -51,6 +72,9 @@ const entryToTimelog = (entry: FirestoreLogEntry, u: any): Timelog => ({
     id: u.document_id,
     employee_id: u.employee_id,
     name: nameFromUser(u),
+    first_name: u.first_name,
+    last_name: u.last_name,
+    role: u.role,
     email: u.auth_email ?? null, // <— from Admin Auth
   } as any,
 });
@@ -119,7 +143,7 @@ export const getEmployeeFilteredTimeLogs = async (arg: { start: Date | string; e
 
 export const getTimelogs = async (filters: TimelogFilters = {}): Promise<Timelog[]> => {
   const s = filters.start ? startOfDayUTC(toDate(filters.start)) : null;
-  const e = filters.end   ? endOfDayUTC(toDate(filters.end))   : null;
+  const e = filters.end ? endOfDayUTC(toDate(filters.end)) : null;
 
   let usersSnap: FirebaseFirestore.QuerySnapshot;
   if (filters.employee_id) {
@@ -127,27 +151,29 @@ export const getTimelogs = async (filters: TimelogFilters = {}): Promise<Timelog
       await getUserDocByDocumentId(String(filters.employee_id)) ||
       await getUserDocByEmployeeId(String(filters.employee_id));
     if (!u) return [];
-    usersSnap = await db.collection(USERS).where('__name__', '==', u.document_id).get();
+    usersSnap = await db.collection(USERS)
+      .where('__name__', '==', u.document_id)
+      .get();
   } else {
     usersSnap = await pickWorkersQuery().get();
   }
 
   const results: Timelog[] = [];
   for (const doc of usersSnap.docs) {
-    const u = await attachAuthToUser(userFromSnap(doc)!); // <— ensure we have auth_email
+    const u = await attachAuthToUser(userFromSnap(doc)!);
     const entries: FirestoreLogEntry[] = u.time_log?.log_entries ?? [];
+
     for (const en of entries) {
-      const inD  = toDate(en.clock_in_date);
+      const inD = toDate(en.clock_in_date);
       const outD = toDate(en.clock_out_date);
-      if (s && e) {
-        if (!rangesOverlap(inD, outD, s, e)) continue;
-      } else if (s && inD < s) continue;
-      else if (e && outD > e) continue;
+      if (s && e && !rangesOverlap(inD, outD, s, e)) continue;
+      if (s && inD < s) continue;
+      if (e && outD > e) continue;
       results.push(entryToTimelog(en, u));
     }
   }
 
-  results.sort((a,b) => +b.startTime - +a.startTime);
+  results.sort((a, b) => +b.startTime - +a.startTime);
   return results;
 };
 

@@ -20,14 +20,14 @@ app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use("/public", express.static("public"));
 app.use(
   cors({
-    origin: ENV.CORS_ORIGIN,
+    origin: "*",
     credentials: true,
   })
 );
 
 //Routes
 app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World! veder-backend is running");
+  res.send("Hello World! veder-backend is running v1");
 });
 
 // API Routes
