@@ -10,157 +10,176 @@ import {
 import { validateCreateUser } from '../utils/validators/userValidator';
 import { ApiResponse, User } from '../types/@server';
 import { CustomError } from '../types/customErrorInterface';
+import { authAdmin, firestore } from '../utils/firebase';
+import { USERS_COLLECTION } from './employeeController';
 
-export const createUserController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const createUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log('createUserController body', req.body);
-    const validatedData = await validateCreateUser(req.body);
-   
-    const user = await createUser(validatedData);
-    
-    const response: ApiResponse<User> = {
+    const { email, password, displayName } = req.body;
+
+    if (!email || !password) {
+      const error: CustomError = new Error('Email and password are required');
+      error.status = 400;
+      throw error;
+    }
+
+    const user = await authAdmin.createUser({
+      email,
+      password,
+      displayName,
+    });
+
+    const response: ApiResponse<any> = {
       success: true,
       message: 'User created successfully',
       data: user,
     };
-    
-    res.status(201).json(response); 
+
+    res.status(201).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllUsersController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+
+export const getAllUsersController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const users = await getAllUsers();
-    
-    const response: ApiResponse<User[]> = {
+    const maxResults = 100; // Firebase Admin limit per call
+    const listUsersResult = await authAdmin.listUsers(maxResults);
+    const authUsers = listUsersResult.users;
+
+    // Fetch all Firestore user docs
+    const snapshot = await firestore.collection(USERS_COLLECTION).get();
+    const firestoreUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+    // Merge Auth and Firestore data based on uid / user_id
+    const mergedUsers = authUsers.map(authUser => {
+      const firestoreUser = firestoreUsers.find((u: any) => {
+        // Normalize both to string for reliable comparison
+        const firestoreUid = String(u.user_id).trim();
+        const authUid = String(authUser.uid).trim();
+        return firestoreUid === authUid;
+      });
+      return {
+        uid: authUser.uid,
+        email: authUser.email,
+        emailVerified: authUser.emailVerified,
+        disabled: authUser.disabled,
+        metadata: authUser.metadata,
+        providerData: authUser.providerData,
+        firestore: firestoreUser || null,
+      };
+    });
+
+    const response: ApiResponse<any[]> = {
       success: true,
       message: 'Users retrieved successfully',
-      data: users,
+      data: mergedUsers,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getUserByIdController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params;
-    const userId = parseInt(id);
-    
-    if (isNaN(userId)) {
-      const error: CustomError = new Error('Invalid user ID');
+    const { id } = req.params; // This should be Firebase uid (string), not number
+
+    if (!id) {
+      const error: CustomError = new Error('User ID is required');
       error.status = 400;
       throw error;
     }
-    
-    const user = await getUserById(userId);
-    
-    if (!user) {
-      const error: CustomError = new Error('User not found');
-      error.status = 404;
-      throw error;
+
+    // Get user from Firebase Auth
+    const user = await authAdmin.getUser(id);
+
+    // Find Firestore user document
+    const snapshot = await firestore
+      .collection(USERS_COLLECTION)
+      .where('user_id', '==', id)
+      .limit(1)
+      .get();
+
+    let firestoreUser = null;
+    if (!snapshot.empty) {
+      firestoreUser = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
     }
-    
-    const response: ApiResponse<User> = {
+
+    const response: ApiResponse<any> = {
       success: true,
       message: 'User retrieved successfully',
-      data: user,
+      data: {
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        disabled: user.disabled,
+        metadata: user.metadata,
+        providerData: user.providerData,
+        firestore: firestoreUser,
+      },
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getUsersByRoleController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+
+// by role// need to be discussed
+export const getUsersByRoleController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { role } = req.params;
-    const users = await getUserByRole(role);
-    
-    const response: ApiResponse<User[]> = {
+
+    const listUsersResult = await authAdmin.listUsers(1000);
+    const filteredUsers = listUsersResult.users.filter(
+      (user) => user.customClaims?.role === role
+    );
+
+    const response: ApiResponse<any[]> = {
       success: true,
       message: `Users with role '${role}' retrieved successfully`,
-      data: users,
+      data: filteredUsers,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateUserController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const updateUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const userId = parseInt(id);
-    
-    if (isNaN(userId)) {
-      const error: CustomError = new Error('Invalid user ID');
-      error.status = 400;
-      throw error;
-    }
-    
-    const user = await updateUser(userId, req.body);
-    
-    const response: ApiResponse<User> = {
+    const updatedUser = await authAdmin.updateUser(id, req.body);
+
+    const response: ApiResponse<any> = {
       success: true,
       message: 'User updated successfully',
-      data: user,
+      data: updatedUser,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteUserController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+
+export const deleteUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const userId = parseInt(id);
-    
-    if (isNaN(userId)) {
-      const error: CustomError = new Error('Invalid user ID');
-      error.status = 400;
-      throw error;
-    }
-    
-    await deleteUser(userId);
-    
+    await authAdmin.deleteUser(id);
+
     const response: ApiResponse = {
       success: true,
       message: 'User deleted successfully',
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
