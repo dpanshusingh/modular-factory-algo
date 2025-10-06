@@ -84,20 +84,20 @@ const newEntryId = () =>
     ? crypto.randomUUID()
     : Math.random().toString(36).slice(2);
 
-const getUserDocByDocumentId = async (document_id: string) => {
+export const getUserDocByDocumentId = async (document_id: string) => {
   const snap = await db.collection(USERS).doc(document_id).get();
   const user = userFromSnap(snap);
   return attachAuthToUser(user);
 };
 
-const getUserDocByEmployeeId = async (employee_id: string) => {
+export const getUserDocByEmployeeId = async (employee_id: string) => {
   const q = await db.collection(USERS).where('employee_id', '==', employee_id).limit(1).get();
   if (q.empty) return null;
   const user = userFromSnap(q.docs[0]);
   return attachAuthToUser(user);
 };
 
-export const createTimelog = async (data: CreateTimelogRequest): Promise<Timelog> => {
+export const createTimelog = async (data: any): Promise<Timelog> => {
   const employeeKey = String(data.employeeId);
 
   let user = await getUserDocByDocumentId(employeeKey);

@@ -3,15 +3,12 @@ import { CreateTimelogRequest, TimelogFilters } from '../../types/@server';
 
 export const createTimelogSchema = yup.object().shape({
   employeeId: yup
-    .number()
-    .integer('Employee ID must be an integer')
-    .positive('Employee ID must be positive')
+    .string()
     .required('Employee ID is required'),
   startTime: yup
     .string()
     .matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/, 'Start time must be in ISO format')
-    .required('Start time is required'),
-  endTime: yup
+    .required('Start time is required'),  endTime: yup
     .string()
     .matches(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?$/, 'End time must be in ISO format')
     .required('End time is required'),

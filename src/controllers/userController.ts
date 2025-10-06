@@ -49,18 +49,29 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
     const listUsersResult = await authAdmin.listUsers(maxResults);
     const authUsers = listUsersResult.users;
 
-    // Fetch all Firestore user docs
-    const snapshot = await firestore.collection(USERS_COLLECTION).get();
-    const firestoreUsers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Fetch all Firestore user docs from auth_users collection
+    const snapshot = await firestore.collection('auth_users').get();
+    const firestoreUsers = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      email: (doc.data().email || '').toLowerCase().trim(),
+      uid: doc.data().uid || doc.id,
+    }));
 
-    // Merge Auth and Firestore data based on uid / user_id
+    // 🔥 Create a quick lookup map by email for O(1) access
+    const firestoreMap = new Map(
+      firestoreUsers.map(u => [u.email, u])
+    );
+
+    //console.log("Firebase Auth Users:", authUsers.map(u => ({ uid: u.uid, email: u.email })));
+
+    // Merge Auth and Firestore data based on **email**
     const mergedUsers = authUsers.map(authUser => {
-      const firestoreUser = firestoreUsers.find((u: any) => {
-        // Normalize both to string for reliable comparison
-        const firestoreUid = String(u.user_id).trim();
-        const authUid = String(authUser.uid).trim();
-        return firestoreUid === authUid;
-      });
+      const authEmail = (authUser.email || '').toLowerCase().trim();
+      const firestoreUser = firestoreMap.get(authEmail);
+
+      //console.log(`Matching - Auth: ${authEmail}, Found in Firestore:`, !!firestoreUser);
+
       return {
         uid: authUser.uid,
         email: authUser.email,
@@ -68,7 +79,16 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
         disabled: authUser.disabled,
         metadata: authUser.metadata,
         providerData: authUser.providerData,
-        firestore: firestoreUser || null,
+        firestore: firestoreUser || {
+          // Default values if Firestore doc not found
+          id: authUser.uid,
+          uid: authUser.uid,
+          firstname: '',
+          lastname: '',
+          role: '',
+          lastActivity: '',
+          email: authUser.email,
+        },
       };
     });
 
@@ -83,6 +103,7 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
     next(error);
   }
 };
+
 
 export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
