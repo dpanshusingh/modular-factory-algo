@@ -51,7 +51,8 @@ export const attachAuthToUser = async <T extends UserDoc | null>(
 };
 
 const pickWorkersQuery = () =>
-  db.collection(USERS).where('role', '==', 'worker');
+  db.collection(USERS)
+//.where('role', '==', 'worker');
 
 // Use auth_email as a fallback in the display name
 const nameFromUser = (u: UserDoc & { auth_email?: string | null }) =>
@@ -141,41 +142,70 @@ export const getEmployeeFilteredTimeLogs = async (arg: { start: Date | string; e
   return filtered.map(x => entryToTimelog(x, user));
 };
 
-export const getTimelogs = async (filters: TimelogFilters = {}): Promise<Timelog[]> => {
+export const getTimelogs = async (filters: TimelogFilters = {}) => {
   const s = filters.start ? startOfDayUTC(toDate(filters.start)) : null;
   const e = filters.end ? endOfDayUTC(toDate(filters.end)) : null;
-
+  console.log("filters",filters,{s,e})
   let usersSnap: FirebaseFirestore.QuerySnapshot;
+
   if (filters.employee_id) {
     const u =
-      await getUserDocByDocumentId(String(filters.employee_id)) ||
-      await getUserDocByEmployeeId(String(filters.employee_id));
+      (await getUserDocByDocumentId(String(filters.employee_id))) ||
+      (await getUserDocByEmployeeId(String(filters.employee_id)));
     if (!u) return [];
-    usersSnap = await db.collection(USERS)
-      .where('__name__', '==', u.document_id)
+
+    usersSnap = await db
+      .collection(USERS)
+      .where("__name__", "==", u.document_id)
       .get();
   } else {
     usersSnap = await pickWorkersQuery().get();
   }
 
-  const results: Timelog[] = [];
-  for (const doc of usersSnap.docs) {
-    const u = await attachAuthToUser(userFromSnap(doc)!);
-    const entries: FirestoreLogEntry[] = u.time_log?.log_entries ?? [];
+  const employeesWithLogs: Array<any> = [];
 
-    for (const en of entries) {
-      const inD = toDate(en.clock_in_date);
-      const outD = toDate(en.clock_out_date);
-      if (s && e && !rangesOverlap(inD, outD, s, e)) continue;
-      if (s && inD < s) continue;
-      if (e && outD > e) continue;
-      results.push(entryToTimelog(en, u));
+  for (const doc of usersSnap.docs) {
+    const user = await (userFromSnap(doc)!);
+    const entries: FirestoreLogEntry[] = user.time_log?.log_entries ?? [];
+
+    const filteredLogs = entries
+      .filter((en) => {
+        const inD = toDate(en.clock_in_date);
+        const outD = toDate(en.clock_out_date);
+
+        if (s && e && !rangesOverlap(inD, outD, s, e)) return false;
+        if (s && inD < s) return false;
+        if (e && outD > e) return false;
+
+        return true;
+      })
+      .map((en) => ({
+        id: (en as any).id,
+        clockIn: toDate(en.clock_in_date),
+        clockOut: toDate(en.clock_out_date),
+        startTime: toDate(en.start_date),
+        endTime: toDate(en.end_date),
+        createdAt: toDate(en.start_date),
+        updatedAt: toDate(en.end_date),
+      }))
+      //.sort((a, b) => +a.startTime - +b.startTime);
+
+    if (filteredLogs.length > 0) {
+      employeesWithLogs.push({
+        employee: {
+          id: user.document_id,
+          employee_id: user.employee_id,
+          ...user,
+          //email: user.auth_email ?? null,
+        },
+        timelogs: filteredLogs,
+      });
     }
   }
 
-  results.sort((a, b) => +b.startTime - +a.startTime);
-  return results;
+  return employeesWithLogs;
 };
+
 
 export const getTimelogById = async (id: number | string): Promise<Timelog | null> => {
   const q = await pickWorkersQuery().get();
@@ -253,7 +283,7 @@ export const getFilteredTimelogs = async (startDateStr: string, endDateStr: stri
   }>();
 
   for (const doc of q.docs) {
-    const u = await attachAuthToUser(userFromSnap(doc)!);
+    const u = await (userFromSnap(doc)!);
     const entries: FirestoreLogEntry[] = u.time_log?.log_entries ?? [];
     const bucket = { employee: u, timelogs: [] as any[] };
 
@@ -276,13 +306,14 @@ export const getFilteredTimelogs = async (startDateStr: string, endDateStr: stri
         employee: {
           id: u.document_id,
           employee_id: u.employee_id,
-          name: nameFromUser(u),
-          email: u.auth_email ?? null,
+          //email: u.auth_email ?? null,
+          ...u,
         },
-        timelogs: bucket.timelogs.sort((a,b) => +a.startTime - +b.startTime),
+        timelogs: bucket.timelogs
+        //.sort((a,b) => +a.startTime - +b.startTime),
       });
     }
-  }
+  } 
 
   return Array.from(byEmp.values());
 };
