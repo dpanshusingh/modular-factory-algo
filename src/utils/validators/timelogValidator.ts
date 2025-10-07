@@ -29,7 +29,6 @@ export const timelogFiltersSchema = yup.object().shape({
     .optional(),
   employee_id: yup
     .string()
-    .matches(/^\d+$/, 'Employee ID must be a number')
     .optional(),
 });
 
