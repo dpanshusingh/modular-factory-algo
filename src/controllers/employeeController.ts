@@ -21,6 +21,9 @@ export const createEmployeeController = async (req: Request, res: Response, next
       create_date: new Date(),
       update_date: new Date(),
       document_id: newUserRef.id, // ✅ store document_id
+      time_log: {
+        log_entries: []
+      },
     });
 
     //const newUserSnap = await newUserRef.get();

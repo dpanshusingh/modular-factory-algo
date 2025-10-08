@@ -15,6 +15,9 @@ export const createEmployeeSchema = yup.object().shape({
   role: yup
     .string()
     .required('role is required'),
+  passcode: yup
+    .string()
+    .required('passcode is required'),
   email: yup
     .string()
     .email('Must be a valid email')
