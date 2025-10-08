@@ -170,8 +170,8 @@ export const getTimelogs = async (filters: TimelogFilters = {}) => {
 
     const filteredLogs = entries
       .filter((en) => {
-        const inD = toDate(en.clock_in_date);
-        const outD = toDate(en.clock_out_date);
+        const inD = toDate(en.start_date);
+        const outD = toDate(en.end_date);
 
         if (s && e && !rangesOverlap(inD, outD, s, e)) return false;
         if (s && inD < s) return false;
