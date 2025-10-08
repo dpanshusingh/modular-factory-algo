@@ -11,6 +11,7 @@ if (!admin.apps.length) {
 
 export const auth = admin.auth();
 export const firestore = admin.firestore();
+export const authAdmin = admin.auth();
 
 export const verifyIdToken = async (idToken: string) => {
   try {

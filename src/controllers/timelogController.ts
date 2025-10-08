@@ -195,17 +195,31 @@ export const getTimelogsByEmployeeController = async (
 ) => {
   try {
     const { employeeId } = req.params;
-    const empId = parseInt(employeeId);
+    const { startDate, endDate } = req.query;
 
-    if (isNaN(empId)) {
-      const error: CustomError = new Error('Invalid employee ID');
+    if (!employeeId) {
+      const error: CustomError = new Error('Employee ID is required');
       error.status = 400;
       throw error;
     }
 
-    const timelogs = await getTimelogsByEmployee(empId);
+    // Set default date range if not provided
+    const end = endDate ? new Date(endDate as string) : new Date();
+    const start = startDate ? new Date(startDate as string) : new Date();
+    
+    // If no start date provided, default to 30 days ago
+    if (!startDate) {
+      start.setDate(start.getDate() - 30);
+    }
 
-    const response: ApiResponse<Timelog[]> = {
+    // Use your existing function
+    const timelogs = await getEmployeeFilteredTimeLogs({
+      start: start,
+      end: end,
+      employee_id: employeeId
+    });
+
+    const response: ApiResponse<any[]> = {
       success: true,
       message: 'Timelogs retrieved successfully',
       data: timelogs,

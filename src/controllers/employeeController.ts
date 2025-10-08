@@ -1,204 +1,221 @@
 import { Request, Response, NextFunction } from 'express';
-import { 
-  createEmployee, 
-  getAllEmployees, 
-  getEmployeeById, 
-  getEmployeeByEmail,
-  updateEmployee, 
-  deleteEmployee,
-  getEmployeesByCrew
-} from '../models/employeeModel';
-import { validateCreateEmployee } from '../utils/validators/employeeValidator';
-import { ApiResponse, Employee } from '../types/@server';
+import { firestore as db, authAdmin } from '../utils/firebase';
+import { ApiResponse } from '../types/@server';
 import { CustomError } from '../types/customErrorInterface';
+import { validateCreateEmployee } from '../utils/validators/employeeValidator';
+import { attachAuthToUser } from '../models/timelogModel';
 
-export const createEmployeeController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const USERS_COLLECTION = 'users';
+
+// =========================================
+// CREATE EMPLOYEE
+// =========================================
+export const createEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log("req.body",req.body)
     const validatedData = await validateCreateEmployee(req.body);
-    // Ensure crews array contains only strings
-    const employeeData = {
+
+    const newUserRef = db.collection(USERS_COLLECTION).doc(); // custom doc ID
+    await newUserRef.set({
       ...validatedData,
-      crews: validatedData.crews.filter((crew): crew is string => typeof crew === 'string')
-    };
-    const employee = await createEmployee(employeeData);
-    
-    const response: ApiResponse<Employee> = {
+      create_date: new Date(),
+      update_date: new Date(),
+      document_id: newUserRef.id, // ✅ store document_id
+    });
+
+    //const newUserSnap = await newUserRef.get();
+    // const enrichedUser = await attachAuthToUser({
+    //   document_id: newUserRef.id,
+    //   ...(newUserSnap.data() as any),
+    // });
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employee created successfully',
-      data: employee,
+      //data: enrichedUser,
     };
-    
+
     res.status(201).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getAllEmployeesController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// GET ALL EMPLOYEES
+// =========================================
+export const getAllEmployeesController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const employees = await getAllEmployees();
-    
-    const response: ApiResponse<Employee[]> = {
+    const snapshot = await db.collection(USERS_COLLECTION).get();
+    const employees = snapshot.docs.map((doc) => ({
+      document_id: doc.id,
+      ...(doc.data() as any),
+    }));
+
+    // ✅ Enrich each with lead_types and auth_email
+    const enrichedEmployees = await Promise.all(
+      employees.map(async (emp) => await attachAuthToUser(emp))
+    );
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employees retrieved successfully',
-      data: employees,
+      data: enrichedEmployees,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getEmployeeByIdController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// GET EMPLOYEE BY ID (document_id)
+// =========================================
+export const getEmployeeByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const employeeId = parseInt(id);
-    
-    if (isNaN(employeeId)) {
-      const error: CustomError = new Error('Invalid employee ID');
-      error.status = 400;
-      throw error;
-    }
-    
-    const employee = await getEmployeeById(employeeId);
-    
-    if (!employee) {
+
+    const docSnap = await db.collection(USERS_COLLECTION).doc(id).get();
+    if (!docSnap.exists) {
       const error: CustomError = new Error('Employee not found');
       error.status = 404;
       throw error;
     }
-    
-    const response: ApiResponse<Employee> = {
+
+    const userData = { document_id: docSnap.id, ...(docSnap.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employee retrieved successfully',
-      data: employee,
+      data: enrichedUser,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getEmployeeByEmailController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// GET EMPLOYEE BY EMAIL
+// =========================================
+export const getEmployeeByEmailController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.params;
-    const employee = await getEmployeeByEmail(email);
-    
-    if (!employee) {
+
+    const snapshot = await db.collection(USERS_COLLECTION).where('email', '==', email).limit(1).get();
+    if (snapshot.empty) {
       const error: CustomError = new Error('Employee not found');
       error.status = 404;
       throw error;
     }
-    
-    const response: ApiResponse<Employee> = {
+
+    const doc = snapshot.docs[0];
+    const userData = { document_id: doc.id, ...(doc.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employee retrieved successfully',
-      data: employee,
+      data: enrichedUser,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const updateEmployeeController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// UPDATE EMPLOYEE
+// =========================================
+export const updateEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const employeeId = parseInt(id);
-    
-    if (isNaN(employeeId)) {
-      const error: CustomError = new Error('Invalid employee ID');
-      error.status = 400;
+
+    const docRef = db.collection(USERS_COLLECTION).doc(id);
+    const docSnap = await docRef.get();
+    if (!docSnap.exists) {
+      const error: CustomError = new Error('Employee not found');
+      error.status = 404;
       throw error;
     }
-    
-    const employee = await updateEmployee(employeeId, req.body);
-    
-    const response: ApiResponse<Employee> = {
+
+    await docRef.update({
+      ...req.body,
+      update_date: new Date(),
+    });
+
+    const updatedSnap = await docRef.get();
+    const userData = { document_id: updatedSnap.id, ...(updatedSnap.data() as any) };
+    const enrichedUser = await attachAuthToUser(userData);
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employee updated successfully',
-      data: employee,
+      data: enrichedUser,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const deleteEmployeeController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// DELETE EMPLOYEE
+// =========================================
+export const deleteEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
-    const employeeId = parseInt(id);
-    
-    if (isNaN(employeeId)) {
-      const error: CustomError = new Error('Invalid employee ID');
-      error.status = 400;
-      throw error;
-    }
-    
-    await deleteEmployee(employeeId);
-    
+
+    await db.collection(USERS_COLLECTION).doc(id).delete();
+
     const response: ApiResponse = {
       success: true,
       message: 'Employee deleted successfully',
     };
-    
     res.status(200).json(response);
   } catch (error) {
     next(error);
   }
 };
 
-export const getEmployeesByCrewController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+// =========================================
+// GET EMPLOYEES BY CREW (lead_type_id)
+// =========================================
+export const getEmployeesByCrewController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { crewId } = req.params;
-    
+
     if (!crewId || crewId.trim() === '') {
       const error: CustomError = new Error('Invalid crew ID');
       error.status = 400;
       throw error;
     }
-    
-    const employees = await getEmployeesByCrew(crewId);
-    
-    const response: ApiResponse<Employee[]> = {
+
+    const snapshot = await db
+      .collection(USERS_COLLECTION)
+      .where('lead_type_ids', 'array-contains', crewId)
+      .get();
+
+    const employees = snapshot.docs.map((doc) => ({
+      document_id: doc.id,
+      ...(doc.data() as any),
+    }));
+
+    const enrichedEmployees = await Promise.all(
+      employees.map(async (emp) => await attachAuthToUser(emp))
+    );
+
+    const response: ApiResponse = {
       success: true,
       message: 'Employees retrieved successfully',
-      data: employees,
+      data: enrichedEmployees,
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     next(error);
