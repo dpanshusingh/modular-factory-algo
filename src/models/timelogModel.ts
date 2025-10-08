@@ -134,10 +134,10 @@ export const getEmployeeFilteredTimeLogs = async (arg: { start: Date | string; e
   const e = endOfDayUTC(end);
 
   const filtered = entries.filter(en => {
-    const inD  = toDate(en.clock_in_date);
-    const outD = toDate(en.clock_out_date);
+    const inD  = toDate(en.start_date);
+    const outD = toDate(en.end_date);
     return rangesOverlap(inD, outD, s, e);
-  }).sort((a,b) => +toDate(a.clock_in_date) - +toDate(b.clock_in_date));
+  }).sort((a,b) => +toDate(a.start_date) - +toDate(b.end_date));
 
   return filtered.map(x => entryToTimelog(x, user));
 };
