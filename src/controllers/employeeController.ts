@@ -7,9 +7,6 @@ import { attachAuthToUser } from '../models/timelogModel';
 
 export const USERS_COLLECTION = 'users';
 
-// =========================================
-// CREATE EMPLOYEE
-// =========================================
 export const createEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log("req.body",req.body)
@@ -26,12 +23,6 @@ export const createEmployeeController = async (req: Request, res: Response, next
       },
     });
 
-    //const newUserSnap = await newUserRef.get();
-    // const enrichedUser = await attachAuthToUser({
-    //   document_id: newUserRef.id,
-    //   ...(newUserSnap.data() as any),
-    // });
-
     const response: ApiResponse = {
       success: true,
       message: 'Employee created successfully',
@@ -44,9 +35,6 @@ export const createEmployeeController = async (req: Request, res: Response, next
   }
 };
 
-// =========================================
-// GET ALL EMPLOYEES
-// =========================================
 export const getAllEmployeesController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const snapshot = await db.collection(USERS_COLLECTION).get();
@@ -72,9 +60,6 @@ export const getAllEmployeesController = async (req: Request, res: Response, nex
   }
 };
 
-// =========================================
-// GET EMPLOYEE BY ID (document_id)
-// =========================================
 export const getEmployeeByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -101,9 +86,6 @@ export const getEmployeeByIdController = async (req: Request, res: Response, nex
   }
 };
 
-// =========================================
-// GET EMPLOYEE BY EMAIL
-// =========================================
 export const getEmployeeByEmailController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email } = req.params;
@@ -131,9 +113,6 @@ export const getEmployeeByEmailController = async (req: Request, res: Response, 
   }
 };
 
-// =========================================
-// UPDATE EMPLOYEE
-// =========================================
 export const updateEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -167,9 +146,7 @@ export const updateEmployeeController = async (req: Request, res: Response, next
   }
 };
 
-// =========================================
-// DELETE EMPLOYEE
-// =========================================
+
 export const deleteEmployeeController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -186,9 +163,6 @@ export const deleteEmployeeController = async (req: Request, res: Response, next
   }
 };
 
-// =========================================
-// GET EMPLOYEES BY CREW (lead_type_id)
-// =========================================
 export const getEmployeesByCrewController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { crewId } = req.params;

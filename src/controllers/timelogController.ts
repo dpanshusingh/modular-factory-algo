@@ -11,7 +11,6 @@ import {
   getEmployeeFilteredTimeLogs
 } from '../models/timelogModel';
 import { validateCreateTimelog, validateTimelogFilters } from '../utils/validators/timelogValidator';
-import { exportTimelogsToCSV, formatCSVResponse } from '../utils/csvExporter';
 import { ApiResponse, Timelog, TimelogFilters } from '../types/@server';
 import { CustomError } from '../types/customErrorInterface';
 
@@ -226,41 +225,6 @@ export const getTimelogsByEmployeeController = async (
     };
 
     res.status(200).json(response);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const exportTimelogsController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const filters: TimelogFilters = {
-      start: req.query.start as string,
-      end: req.query.end as string,
-      employee_id: req.query.employee_id as string,
-    };
-
-    // Validate filters
-    const validatedFilters = await validateTimelogFilters(filters);
-
-    const timelogs = await getTimelogsForExport(validatedFilters);
-
-    if (timelogs.length === 0) {
-      const response: ApiResponse = {
-        success: false,
-        message: 'No timelogs found for the specified filters',
-      };
-      return res.status(404).json(response);
-    }
-
-    const csvContent = exportTimelogsToCSV(timelogs);
-    const csvResponse = formatCSVResponse(csvContent, 'timelogs');
-
-    res.set(csvResponse.headers);
-    res.send(csvResponse.content);
   } catch (error) {
     next(error);
   }

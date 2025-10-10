@@ -6,7 +6,6 @@ import {
   updateTimelogController,
   deleteTimelogController,
   getTimelogsByEmployeeController,
-  exportTimelogsController, 
   getTimelogsFilterController,
   filteredEmployeeTimelogController
 } from '../controllers/timelogController';
@@ -23,9 +22,6 @@ router.use(authenticateToken);
 
 // GET /api/timelogs - Get timelogs with optional filters
 router.get('/', getTimelogsController);
-
-// GET /api/timelogs/export - Export timelogs to CSV
-router.get('/export', exportTimelogsController);
 
 // GET /api/timelogs/employee/:employeeId - Get timelogs by employee
 router.get('/employee/:employeeId', getTimelogsByEmployeeController);

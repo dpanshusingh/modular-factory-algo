@@ -1,13 +1,4 @@
 import { Request, Response, NextFunction } from 'express';
-import { 
-  createUser, 
-  getAllUsers, 
-  getUserById, 
-  getUserByRole, 
-  updateUser, 
-  deleteUser 
-} from '../models/userModel';
-import { validateCreateUser } from '../utils/validators/userValidator';
 import { ApiResponse, User } from '../types/@server';
 import { CustomError } from '../types/customErrorInterface';
 import { authAdmin, firestore } from '../utils/firebase';
@@ -16,7 +7,7 @@ import { USERS_COLLECTION } from './employeeController';
 export const createUserController = async (req: Request, res: Response, next: NextFunction) => {
   try {
     console.log('createUserController body', req.body);
-    const { email, password, displayName } = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       const error: CustomError = new Error('Email and password are required');
@@ -27,7 +18,6 @@ export const createUserController = async (req: Request, res: Response, next: Ne
     const user = await authAdmin.createUser({
       email,
       password,
-      displayName,
     });
 
     const response: ApiResponse<any> = {
@@ -45,7 +35,7 @@ export const createUserController = async (req: Request, res: Response, next: Ne
 
 export const getAllUsersController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const maxResults = 100; // Firebase Admin limit per call
+    const maxResults = 100;
     const listUsersResult = await authAdmin.listUsers(maxResults);
     const authUsers = listUsersResult.users;
 
@@ -58,19 +48,14 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
       uid: doc.data().uid || doc.id,
     }));
 
-    // 🔥 Create a quick lookup map by email for O(1) access
     const firestoreMap = new Map(
       firestoreUsers.map(u => [u.email, u])
     );
-
-    //console.log("Firebase Auth Users:", authUsers.map(u => ({ uid: u.uid, email: u.email })));
 
     // Merge Auth and Firestore data based on **email**
     const mergedUsers = authUsers.map(authUser => {
       const authEmail = (authUser.email || '').toLowerCase().trim();
       const firestoreUser = firestoreMap.get(authEmail);
-
-      //console.log(`Matching - Auth: ${authEmail}, Found in Firestore:`, !!firestoreUser);
 
       return {
         uid: authUser.uid,
@@ -107,7 +92,7 @@ export const getAllUsersController = async (req: Request, res: Response, next: N
 
 export const getUserByIdController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { id } = req.params; // This should be Firebase uid (string), not number
+    const { id } = req.params; 
 
     if (!id) {
       const error: CustomError = new Error('User ID is required');

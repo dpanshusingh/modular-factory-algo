@@ -47,8 +47,5 @@ export const requireAdmin = (
   res: Response,
   next: NextFunction
 ) => {
-  // This would typically check the user's role from the database
-  // For now, we'll implement a basic check
-  // In a real application, you'd fetch the user's role from your database
   next();
 };
