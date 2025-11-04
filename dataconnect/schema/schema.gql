@@ -1,0 +1,293 @@
+# =====================
+# Base User and Employee Types
+# =====================
+
+type User @table {
+  email: String! @unique
+  firstname: String!
+  lastname: String!
+  role: String!
+  lastActivity: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Employee @table {
+  name: String!
+  email: String @unique
+  crews: [String]
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  lastActivity: Timestamp
+}
+
+type Timelog @table {
+  employee: Employee!
+  startTime: Timestamp!
+  endTime: Timestamp!
+  description: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+# ------------------------
+# Enums
+# ------------------------
+
+enum TaskStatus { pending approved rejected }
+enum LeadType { closeup drywall electrical exterior floors hvac insulation interior office paint plumbing roofing shipping walls }
+enum NoteType { approval rejection photoOnly move moveRequest normal }
+enum StorageDirectory { settings travelers temp }
+enum Skill { framing finishCarpentry electricalTrim electricalRough plumbing drywallHanging drywallMud texture painting roofing flooring boxMoving cutting hvac }
+enum ModuleCharacteristicType { squareFeet linearFeetExteriorWalls linearFeetInteriorWalls countInteriorWalls countToilets countSinks countWindows countExteriorDoors countInteriorDoors squareFeetExteriorCloseUp squareFeetRoofing linearFeetCabinets countElectricalTerminals linearFeetFirewall countStairs hasHvacDucting }
+enum WorkerRole { worker lead qam supervisor admin }
+enum IssueType { materialShortage mistake }
+
+# =====================
+# Core Project Structure
+# =====================
+
+type Project @table {
+  name: String
+}
+
+type TravelerTemplate @table {
+  name: String
+  project: Project
+}
+
+type ModuleProfile @table(key: "id") {
+  id: String!
+  name: String
+}
+
+type ModuleCharacteristic @table {
+  moduleProfile: ModuleProfile!
+  characteristicType: ModuleCharacteristicType
+  value: Float
+}
+
+# =====================
+# Traveler and Station
+# =====================
+
+type Traveler @table {
+  travelerTemplate: TravelerTemplate!
+  moduleProfile: ModuleProfile
+  isShipped: Boolean
+  notesRequiredUpload: Boolean
+  serialNumber: String
+}
+
+type Station @table {
+  travelerTemplate: TravelerTemplate!
+  name: String
+  order: Int
+  doesReceiveTravelers: Boolean
+}
+
+type TravelerStation @table {
+  traveler: Traveler!
+  station: Station!
+  leadInspectionProgress: Float
+  qamInspectionProgress: Float
+  taskProgress: Float
+  isCurrent: Boolean
+}
+
+# =====================
+# Inspection System
+# =====================
+
+type InspectionArea @table {
+  station: Station!
+  name: String
+  order: Int
+}
+
+type InspectionItemTemplate @table {
+  inspectionArea: InspectionArea!
+  leadType: LeadType
+  name: String
+  order: Int
+  isPhotoRequired: Boolean
+  isVideoRequired: Boolean
+}
+
+type InspectionItem @table {
+  inspectionItemTemplate: InspectionItemTemplate!
+  traveler: Traveler!
+  isMoveRequested: Boolean
+  isMoved: Boolean
+  newInspectionArea: InspectionArea
+  leadStatus: TaskStatus
+  qamStatus: TaskStatus
+}
+
+# =====================
+# Task System
+# =====================
+
+type TaskTemplate @table {
+  station: Station!
+  leadType: LeadType
+  name: String
+  order: Int
+  isPhotoRequired: Boolean
+  isVideoRequired: Boolean
+  minWorkers: Int
+  maxWorkers: Int
+  rankedSkills: [Skill]
+  moduleCharacteristicType: ModuleCharacteristicType
+}
+
+type Task @table {
+  taskTemplate: TaskTemplate!
+  traveler: Traveler!
+  isMoveRequested: Boolean
+  isMoved: Boolean
+  newStation: Station
+  leadStatus: TaskStatus
+  qamStatus: TaskStatus
+  createdAt: Timestamp!
+}
+
+type WorkUnit @table {
+  task: Task!
+  startDate: Timestamp
+  endDate: Timestamp
+}
+
+# =====================
+# Adhoc Items
+# =====================
+
+type AdhocTask @table {
+  traveler: Traveler!
+  station: Station!
+  isMoveRequested: Boolean
+  isMoved: Boolean
+  newStation: Station
+  leadType: LeadType
+  leadStatus: TaskStatus
+  qamStatus: TaskStatus
+  order: Int
+  isPhotoRequired: Boolean
+  isVideoRequired: Boolean
+}
+
+type AdhocInspectionItem @table {
+  traveler: Traveler!
+  inspectionArea: InspectionArea!
+  isMoveRequested: Boolean
+  isMoved: Boolean
+  newInspectionArea: InspectionArea
+  leadType: LeadType
+  leadStatus: TaskStatus
+  qamStatus: TaskStatus
+  order: Int
+  isPhotoRequired: Boolean
+  isVideoRequired: Boolean
+}
+
+# =====================
+# Issues
+# =====================
+
+type Issue @table {
+  task: Task
+  traveler: Traveler
+  station: Station
+  name: String
+  description: String
+  type: IssueType
+  isResolved: Boolean
+}
+
+# =====================
+# Workers and Time Tracking
+# =====================
+
+type Worker @table {
+  station: Station
+  employeeId: String
+  firstName: String
+  lastName: String
+  leadTypes: [LeadType]
+  passcode: String
+  role: WorkerRole
+  newStation: Station
+  rankedSkills: [Skill]
+  customClockInDate: Timestamp
+  customClockOutDate: Timestamp
+}
+
+type TimeLog @table {
+  worker: Worker!
+  workUnit: WorkUnit
+  officialClockInDate: Timestamp
+  officialClockOutDate: Timestamp
+  actualClockInDate: Timestamp
+  actualClockOutDate: Timestamp
+}
+
+# =====================
+# Supporting Types
+# =====================
+
+type Note @table {
+  text: String
+  type: NoteType
+}
+
+type ManagedFile @table {
+  contentType: String
+  filename: String
+  isUploaded: Boolean
+  isAuthRequired: Boolean
+  shouldBePublic: Boolean
+  shouldCache: Boolean
+  shouldDeferUpload: Boolean
+  storageDir: StorageDirectory
+  uploadAttempts: Int
+  createdAt: Timestamp!
+}
+
+# =====================
+# Many-to-Many Junction Tables
+# =====================
+
+type TaskNote @table {
+  task: Task!
+  note: Note!
+}
+
+type InspectionItemNote @table {
+  inspectionItem: InspectionItem!
+  note: Note!
+}
+
+type AdhocTaskNote @table {
+  adhocTask: AdhocTask!
+  note: Note!
+}
+
+type AdhocInspectionItemNote @table {
+  adhocInspectionItem: AdhocInspectionItem!
+  note: Note!
+}
+
+type TaskFile @table {
+  task: Task!
+  managedFile: ManagedFile!
+}
+
+type InspectionItemFile @table {
+  inspectionItem: InspectionItem!
+  managedFile: ManagedFile!
+}
+
+type WorkUnitWorker @table {
+  workUnit: WorkUnit!
+  worker: Worker!
+}

@@ -1,0 +1,129 @@
+# ------------------------
+# Queries
+# ------------------------
+
+query GetAllUsers {
+  users: User {
+    id
+    email
+    firstname
+    lastname
+    role
+    createdAt
+  }
+}
+
+query GetUserByEmail($email: String!) {
+  user: User(where: { email: { eq: $email } }) {
+    id
+    email
+    firstname
+    lastname
+    role
+  }
+}
+
+query GetEmployees {
+  employees: Employee {
+    id
+    name
+    email
+    crews
+    createdAt
+  }
+}
+
+query GetTimelogs {
+  timelogs: Timelog {
+    id
+    employee {
+      id
+      name
+      email
+    }
+    startTime
+    endTime
+    description
+  }
+}
+
+
+# ------------------------
+# Mutations
+# ------------------------
+
+mutation CreateUser(
+  $email: String!
+  $firstname: String!
+  $lastname: String!
+  $role: String!
+) {
+  createUser: UserInsert(input: {
+    email: $email
+    firstname: $firstname
+    lastname: $lastname
+    role: $role
+  }) {
+    id
+    email
+  }
+}
+
+mutation CreateEmployee(
+  $name: String!
+  $email: String
+  $crews: [String]
+) {
+  createEmployee: EmployeeInsert(input: {
+    name: $name
+    email: $email
+    crews: $crews
+  }) {
+    id
+    name
+    email
+  }
+}
+
+# ------------------------
+# Project Queries
+# ------------------------
+
+query GetAllProjects { projects { id name } }
+
+query GetProjectById($id: ID!) {
+  projects: project(where: { id: { eq: $id } }) {
+    id
+    name
+  }
+}
+
+# ------------------------
+# Project Mutations
+# ------------------------
+
+mutation CreateProject($name: String!) {
+  createProject: project_insert(input: { name: $name }) {
+    id
+    name
+  }
+}
+
+mutation UpdateProject($id: ID!, $name: String!) {
+  updateProject: project_update(where: { id: { eq: $id } }, input: { name: $name }) {
+    id
+    name
+  }
+}
+
+mutation DeleteProject($id: ID!) {
+  deleteProject: project_delete(where: { id: { eq: $id } }) {
+    id
+    name
+  }
+}
+
+# Health check query (fixes the deployment warning)
+query healthCheck @auth(level: NO_ACCESS) {
+  _healthCheck: Boolean
+}
