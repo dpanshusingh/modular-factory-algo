@@ -15,5 +15,16 @@ export const GET_PROJECTS = `
   }
 `;
 
+export const UPDATE_PROJECT = `
+  mutation UpdateProject($id: UUID!, $name: String!) {
+    project_update(id: $id, data: { name: $name })
+  }
+`;
 
+// ✅ DELETE
+export const DELETE_PROJECT = `
+  mutation DeleteProject($id: UUID!) {
+    project_delete(id: $id)
+  }
+`;
 
