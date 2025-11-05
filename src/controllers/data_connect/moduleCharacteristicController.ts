@@ -1,0 +1,256 @@
+import { Request, Response, NextFunction } from "express";
+import { dataConnect } from "../../config/dataConnectClient";
+import {
+  CREATE_MODULE_CHARACTERISTIC,
+  DELETE_MODULE_CHARACTERISTIC,
+  GET_ALL_MODULE_CHARACTERISTICS,
+  UPDATE_MODULE_CHARACTERISTIC,
+} from "../../queries/moduleCharacteristic.query";
+import crypto from "crypto";
+import { ApiResponse } from "../../types/@server";
+
+export const createModuleCharacteristic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { moduleProfileId, characteristicType, value } = req.body;
+
+    if (!moduleProfileId) {
+      return res.status(400).json({
+        success: false,
+        message: "moduleProfileId is required",
+      });
+    }
+
+    const id = crypto.randomUUID();
+
+    const result = await dataConnect.executeGraphql(
+      CREATE_MODULE_CHARACTERISTIC,
+      {
+        variables: {
+          id,
+          moduleProfileId,
+          characteristicType: characteristicType || null,
+          value: value ? parseFloat(value) : null,
+        },
+      }
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Created characteristic successfully",
+      data: result.data,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createManyModuleCharacteristics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body must include a non-empty 'items' array",
+      });
+    }
+
+    const itemsWithIds = items.map((item: any) => ({
+      id: crypto.randomUUID(),
+      moduleProfileId: item.moduleProfileId,
+      characteristicType: item.characteristicType,
+      value: item.value,
+    }));
+
+    const valuesString = itemsWithIds
+      .map(
+        (item) => `{
+          id: "${item.id}",
+          moduleProfileId: "${item.moduleProfileId}",
+          characteristicType: ${item.characteristicType},
+          value: ${item.value ?? 0}
+        }`
+      )
+      .join(", ");
+
+    const mutation = `
+      mutation {
+        moduleCharacteristic_insertMany(
+          data: [${valuesString}]
+        )
+      }
+    `;
+
+    const result = await dataConnect.executeGraphql(mutation);
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Created characteristics successfully",
+      data: result.data,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error("Error inserting module characteristics:", error);
+    next(error);
+  }
+};
+
+export const getAllModuleCharacteristics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const result = await dataConnect.executeGraphql(
+      GET_ALL_MODULE_CHARACTERISTICS
+    );
+    const response: ApiResponse = {
+      success: true,
+      message: "Get characteristics successfully",
+      data: result,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateModuleCharacteristic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { value, characteristicType } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "id is required to update ModuleCharacteristic",
+      });
+    }
+
+    const updateData: any = {};
+    if (value !== undefined) updateData.value = parseFloat(value);
+    if (characteristicType) updateData.characteristicType = characteristicType;
+
+    const result = await dataConnect.executeGraphql(
+      UPDATE_MODULE_CHARACTERISTIC,
+      {
+        variables: {
+          id,
+          value: value ? parseFloat(value) : null,
+          characteristicType: characteristicType || null,
+        },
+      }
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Updated characteristic successfully",
+      data: result.data,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteModuleCharacteristic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const result = await dataConnect.executeGraphql(
+      DELETE_MODULE_CHARACTERISTIC,
+      {
+        variables: { id },
+      }
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Deleted characteristic successfully",
+      data: result.data,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateManyModuleCharacteristics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body must include an 'items' array with update data",
+      });
+    }
+
+    // Validate each item
+    for (const item of items) {
+      if (!item.id) {
+        return res.status(400).json({
+          success: false,
+          message: "Each item must include an 'id'",
+        });
+      }
+    }
+
+    // Perform updates sequentially or in parallel
+    const updatePromises = items.map(async (item) => {
+      const mutation = `
+        mutation {
+          moduleCharacteristic_update(
+            id: "${item.id}",
+            data: {
+              ${item.characteristicType ? `characteristicType: ${item.characteristicType},` : ""}
+              ${item.value !== undefined ? `value: ${item.value}` : ""}
+            }
+          ) {
+            id
+            characteristicType
+            value
+          }
+        }
+      `;
+
+      return dataConnect.executeGraphql(mutation);
+    });
+
+    const results = await Promise.all(updatePromises);
+
+    res.status(200).json({
+      success: true,
+      message: "ModuleCharacteristics updated successfully",
+      data: results.map((r) => r.data),
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

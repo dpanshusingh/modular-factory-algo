@@ -57,7 +57,11 @@ export interface CreateTimelogRequest {
 
 export interface CreateProjectRequest {
   projectId: number;
-  title?: string;
+  name?: string;
+}
+export interface CreateModuleProfileRequest {
+  projectId: number;
+  name?: string;
 }
 
 export interface TimelogFilters {
