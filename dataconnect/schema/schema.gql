@@ -79,8 +79,9 @@ type Traveler @table {
   serialNumber: String
 }
 
+# ✅ FIXED STATION TYPE HERE
 type Station @table {
-  travelerTemplate: TravelerTemplate!
+  taskTemplate: TaskTemplate      # Changed from travelerTemplate
   name: String
   order: Int
   doesReceiveTravelers: Boolean
@@ -238,6 +239,9 @@ type TimeLog @table {
 type Note @table {
   text: String
   type: NoteType
+  traveler: Traveler
+  task: Task
+  inspectionItem: InspectionItem
 }
 
 type ManagedFile @table {

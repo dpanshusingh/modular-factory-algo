@@ -47,7 +47,6 @@ query GetTimelogs {
   }
 }
 
-
 # ------------------------
 # Mutations
 # ------------------------
@@ -82,44 +81,6 @@ mutation CreateEmployee(
     id
     name
     email
-  }
-}
-
-# ------------------------
-# Project Queries
-# ------------------------
-
-query GetAllProjects { projects { id name } }
-
-query GetProjectById($id: ID!) {
-  projects: project(where: { id: { eq: $id } }) {
-    id
-    name
-  }
-}
-
-# ------------------------
-# Project Mutations
-# ------------------------
-
-mutation CreateProject($name: String!) {
-  createProject: project_insert(input: { name: $name }) {
-    id
-    name
-  }
-}
-
-mutation UpdateProject($id: ID!, $name: String!) {
-  updateProject: project_update(where: { id: { eq: $id } }, input: { name: $name }) {
-    id
-    name
-  }
-}
-
-mutation DeleteProject($id: ID!) {
-  deleteProject: project_delete(where: { id: { eq: $id } }) {
-    id
-    name
   }
 }
 
