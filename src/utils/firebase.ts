@@ -1,6 +1,5 @@
 import * as admin from "firebase-admin";
 import { ENV } from "../config/envConfig";
-import { getDataConnect } from "firebase/data-connect";
 
 // Initialize Firebase Admin SDK with environment variables
 if (!admin.apps.length) {
@@ -32,7 +31,3 @@ export const getUserByUid = async (uid: string) => {
     throw new Error('User not found');
   }
 };
-
-
-// const dataConnect = getDataConnect("your-connection"); // Replace with your connection ID
-// export { admin, dataConnect };
