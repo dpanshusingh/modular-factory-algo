@@ -7,6 +7,7 @@ import { userRoutes } from "./routes/userRoutes";
 import { employeeRoutes } from "./routes/employeeRoutes";
 import { timelogRoutes } from "./routes/timelogRoutes";
 import { ENV } from "./config/envConfig";
+import { projectRoutes } from "./routes/projectRoute";
 
 
 const app = express();
@@ -34,6 +35,7 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/timelogs", timelogRoutes);
+app.use("/api/projects",projectRoutes)
 
 app.use(errorMiddleware);
 

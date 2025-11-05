@@ -135,6 +135,10 @@ dist
 **/node_modules/*
 **/.firebaserc
 
+# Firebase DataConnect
+dataconnect/pgliteData/
+dataconnect/.firebase/
+dataconnect/.dataconnect/
 
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Git,Node,Firebase,express,pg

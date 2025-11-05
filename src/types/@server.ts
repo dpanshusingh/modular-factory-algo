@@ -28,6 +28,13 @@ export interface Timelog {
   updatedAt: Date;
 }
 
+export interface Project {
+  id: number;
+  name: String;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CreateUserRequest {
   email: string;
   firstname: string;
@@ -46,6 +53,11 @@ export interface CreateTimelogRequest {
   startTime: string;
   endTime: string;
   description?: string;
+}
+
+export interface CreateProjectRequest {
+  projectId: number;
+  title?: string;
 }
 
 export interface TimelogFilters {
