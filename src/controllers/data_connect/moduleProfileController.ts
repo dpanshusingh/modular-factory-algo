@@ -12,8 +12,8 @@ export const createModuleProfile = async (
   next: NextFunction
 ) => {
   try {
-    const { name } = req.body;
-    const id = crypto.randomUUID();
+    const { id, name} = req.body;
+    // const id = crypto.randomUUID();
     if (name && typeof name !== "string") {
       return res.status(400).json({
         success: false,
@@ -24,7 +24,7 @@ export const createModuleProfile = async (
     const result = await dataConnect.executeGraphql(CREATE_MODULEPROFILE, {
       variables: {
         id,
-        name,
+        name
       },
     });
 

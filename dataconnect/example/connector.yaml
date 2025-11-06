@@ -1,16 +1,1 @@
-connectors:
-  - connectorId: vos-web
-    source:
-      postgresql:
-        instanceId: vedeera-cloud12345
-        database: vederra-7c271-2-database
-        location: us-central1
-    schema:
-      file: schema/schema.gql
-    generate:
-      javascriptSdk:
-        - outputDir: ../../src/dataconnect-generated
-          package: "@dataconnect/generated"
-          packageJsonDir: ../..
-          react: false
-          angular: false
+connectorId: "vos-web"

@@ -1,7 +1,7 @@
 export const CREATE_MODULEPROFILE = `
   mutation CreateModuleProfile($id: String!, $name: String!) {
     moduleProfile_insert(
-      data: { id: $id, name: $name}
+      data: {id: $id, name: $name}
     )
   }
 `;
