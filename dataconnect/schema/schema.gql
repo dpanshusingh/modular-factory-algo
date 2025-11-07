@@ -1,8 +1,9 @@
 # =====================
-# Base User and Employee Types
+# Base User Type
 # =====================
 
 type User @table {
+  id: String!
   email: String! @unique
   firstname: String!
   lastname: String!
@@ -12,27 +13,9 @@ type User @table {
   updatedAt: Timestamp!
 }
 
-type Employee @table {
-  name: String!
-  email: String @unique
-  crews: [String]
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  lastActivity: Timestamp
-}
-
-type Timelog @table {
-  employee: Employee!
-  startTime: Timestamp!
-  endTime: Timestamp!
-  description: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-}
-
-# ------------------------
+# =====================
 # Enums
-# ------------------------
+# =====================
 
 enum TaskStatus { pending approved rejected }
 enum LeadType { closeup drywall electrical exterior floors hvac insulation interior office paint plumbing roofing shipping walls }
@@ -48,30 +31,31 @@ enum IssueType { materialShortage mistake }
 # =====================
 
 type Project @table {
-  name: String
-}
-
-type TravelerTemplate @table {
-  name: String
-  project: Project
-}
-
-type ModuleProfile @table(key: "id") {
   id: String!
   name: String
 }
 
+type ModuleProfile @table {
+  id: String!
+  name: String
+  project: Project
+}
+
 type ModuleCharacteristic @table {
+  id: String!
   moduleProfile: ModuleProfile!
   characteristicType: ModuleCharacteristicType
   value: Float
 }
 
-# =====================
-# Traveler and Station
-# =====================
+type TravelerTemplate @table {
+  id: String!
+  name: String
+  project: Project
+}
 
 type Traveler @table {
+  id: String!
   travelerTemplate: TravelerTemplate!
   moduleProfile: ModuleProfile
   isShipped: Boolean
@@ -79,15 +63,27 @@ type Traveler @table {
   serialNumber: String
 }
 
-# ✅ FIXED STATION TYPE HERE
+# =====================
+# Traveler and Station
+# =====================
+
+type InspectionArea @table {
+  id: String!
+  name: String
+  order: Int
+}
+
 type Station @table {
-  taskTemplate: TaskTemplate      # Changed from travelerTemplate
+  id: String!
+  inspectionArea: InspectionArea
   name: String
   order: Int
   doesReceiveTravelers: Boolean
 }
 
+# ✅ join table for Traveler <-> Station (with id)
 type TravelerStation @table {
+  id: String!
   traveler: Traveler!
   station: Station!
   leadInspectionProgress: Float
@@ -100,13 +96,8 @@ type TravelerStation @table {
 # Inspection System
 # =====================
 
-type InspectionArea @table {
-  station: Station!
-  name: String
-  order: Int
-}
-
 type InspectionItemTemplate @table {
+  id: String!
   inspectionArea: InspectionArea!
   leadType: LeadType
   name: String
@@ -116,6 +107,7 @@ type InspectionItemTemplate @table {
 }
 
 type InspectionItem @table {
+  id: String!
   inspectionItemTemplate: InspectionItemTemplate!
   traveler: Traveler!
   isMoveRequested: Boolean
@@ -130,7 +122,8 @@ type InspectionItem @table {
 # =====================
 
 type TaskTemplate @table {
-  station: Station!
+  id: String!
+  station: Station
   leadType: LeadType
   name: String
   order: Int
@@ -143,6 +136,7 @@ type TaskTemplate @table {
 }
 
 type Task @table {
+  id: String!
   taskTemplate: TaskTemplate!
   traveler: Traveler!
   isMoveRequested: Boolean
@@ -153,17 +147,12 @@ type Task @table {
   createdAt: Timestamp!
 }
 
-type WorkUnit @table {
-  task: Task!
-  startDate: Timestamp
-  endDate: Timestamp
-}
-
 # =====================
 # Adhoc Items
 # =====================
 
 type AdhocTask @table {
+  id: String!
   traveler: Traveler!
   station: Station!
   isMoveRequested: Boolean
@@ -178,6 +167,7 @@ type AdhocTask @table {
 }
 
 type AdhocInspectionItem @table {
+  id: String!
   traveler: Traveler!
   inspectionArea: InspectionArea!
   isMoveRequested: Boolean
@@ -196,9 +186,9 @@ type AdhocInspectionItem @table {
 # =====================
 
 type Issue @table {
+  id: String!
   task: Task
-  traveler: Traveler
-  station: Station
+  inspectionItem: InspectionItem
   name: String
   description: String
   type: IssueType
@@ -210,6 +200,7 @@ type Issue @table {
 # =====================
 
 type Worker @table {
+  id: String!
   station: Station
   employeeId: String
   firstName: String
@@ -223,9 +214,19 @@ type Worker @table {
   customClockOutDate: Timestamp
 }
 
-type TimeLog @table {
+# ✅ worker-task join table with id
+type WorkerTask @table {
+  id: String!
   worker: Worker!
-  workUnit: WorkUnit
+  task: Task!
+  startDate: Timestamp
+  endDate: Timestamp
+}
+
+type TimeLog @table {
+  id: String!
+  worker: Worker!
+  workerTask: WorkerTask
   officialClockInDate: Timestamp
   officialClockOutDate: Timestamp
   actualClockInDate: Timestamp
@@ -237,14 +238,18 @@ type TimeLog @table {
 # =====================
 
 type Note @table {
+  id: String!
   text: String
   type: NoteType
   traveler: Traveler
   task: Task
   inspectionItem: InspectionItem
+  adhocTask: AdhocTask
+  adhocInspectionItem: AdhocInspectionItem
 }
 
 type ManagedFile @table {
+  id: String!
   contentType: String
   filename: String
   isUploaded: Boolean
@@ -255,43 +260,21 @@ type ManagedFile @table {
   storageDir: StorageDirectory
   uploadAttempts: Int
   createdAt: Timestamp!
+  task: Task
 }
 
 # =====================
-# Many-to-Many Junction Tables
+# Short-named Mapping Tables
 # =====================
 
-type TaskNote @table {
-  task: Task!
-  note: Note!
+type TravelerTemplateItemTemplate @table(name: "traveler_template_item_template") {
+  id: String!
+  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_tt_it_trv")
+  inspectionItemTemplate: InspectionItemTemplate! @ref(constraintName: "fk_tt_it_tmp")
 }
 
-type InspectionItemNote @table {
-  inspectionItem: InspectionItem!
-  note: Note!
-}
-
-type AdhocTaskNote @table {
-  adhocTask: AdhocTask!
-  note: Note!
-}
-
-type AdhocInspectionItemNote @table {
-  adhocInspectionItem: AdhocInspectionItem!
-  note: Note!
-}
-
-type TaskFile @table {
-  task: Task!
-  managedFile: ManagedFile!
-}
-
-type InspectionItemFile @table {
-  inspectionItem: InspectionItem!
-  managedFile: ManagedFile!
-}
-
-type WorkUnitWorker @table {
-  workUnit: WorkUnit!
-  worker: Worker!
+type TravelerTemplateTaskMap @table(name: "traveler_template_task_map") {
+  id: String!
+  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_tt_t_map_trv")
+  taskTemplate: TaskTemplate! @ref(constraintName: "fk_tt_t_map_tmp")
 }

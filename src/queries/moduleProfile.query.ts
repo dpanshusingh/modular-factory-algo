@@ -15,3 +15,12 @@ export const GET_MODULEPROFILES = `
     }
   }
 `;
+
+export const GET_MODULEPROFILE_BY_ID = `
+  query GetModuleProfileById($id: ID!) {
+    moduleProfile(id: $id) {
+      id
+      name
+    }
+  }
+`;
