@@ -1,15 +1,18 @@
 // controllers/data_connect/projectController.ts
 import { Request, Response, NextFunction } from "express";
+import { v4 as uuidv4 } from 'uuid';
 import { dataConnect } from "../../config/dataConnectClient";
 import { CREATE_PROJECT, DELETE_PROJECT, GET_PROJECTS, UPDATE_PROJECT } from "../../queries/project.query";
 
 export const createProject = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { name } = req.body;
+    const id = uuidv4();
 
     const result = await dataConnect.executeGraphql(CREATE_PROJECT, {
       variables: { 
-        name,
+        id,
+        name
       },
     });
 
