@@ -3,6 +3,7 @@ import { dataConnect } from "../../config/dataConnectClient";
 import {
   CREATE_MODULE_CHARACTERISTIC,
   DELETE_MODULE_CHARACTERISTIC,
+  deleteModuleCharacteristicsById,
   GET_ALL_MODULE_CHARACTERISTICS,
   getModuleCharacteristicsById,
   UPDATE_MODULE_CHARACTERISTIC,
@@ -51,61 +52,61 @@ export const createModuleCharacteristic = async (
   }
 };
 
-// export const createManyModuleCharacteristics = async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ): Promise<any> => {
-//   try {
-//     const { items } = req.body;
+export const createManyModuleCharacteristics = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { items } = req.body;
 
-//     if (!Array.isArray(items) || items.length === 0) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Request body must include a non-empty 'items' array",
-//       });
-//     }
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Request body must include a non-empty 'items' array",
+      });
+    }
 
-//     const itemsWithIds = items.map((item: any) => ({
-//       id: crypto.randomUUID(),
-//       moduleProfileId: item.moduleProfileId,
-//       characteristicType: item.characteristicType,
-//       value: item.value,
-//     }));
+    const itemsWithIds = items.map((item: any) => ({
+      id: crypto.randomUUID(),
+      moduleProfileId: item.moduleProfileId,
+      characteristicType: item.characteristicType,
+      value: item.value,
+    }));
 
-//     const valuesString = itemsWithIds
-//       .map(
-//         (item) => `{
-//           id: "${item.id}",
-//           moduleProfileId: "${item.moduleProfileId}",
-//           characteristicType: ${item.characteristicType},
-//           value: ${item.value ?? 0}
-//         }`
-//       )
-//       .join(", ");
+    const valuesString = itemsWithIds
+      .map(
+        (item) => `{
+          id: "${item.id}",
+          moduleProfileId: "${item.moduleProfileId}",
+          characteristicType: ${item.characteristicType},
+          value: ${item.value ?? 0}
+        }`
+      )
+      .join(", ");
 
-//     const mutation = `
-//       mutation {
-//         moduleCharacteristic_insertMany(
-//           data: [${valuesString}]
-//         )
-//       }
-//     `;
+    const mutation = `
+      mutation {
+        moduleCharacteristic_insertMany(
+          data: [${valuesString}]
+        )
+      }
+    `;
 
-//     const result = await dataConnect.executeGraphql(mutation);
+    const result = await dataConnect.executeGraphql(mutation);
 
-//     const response: ApiResponse = {
-//       success: true,
-//       message: "Created characteristics successfully",
-//       data: result.data,
-//     };
+    const response: ApiResponse = {
+      success: true,
+      message: "Created characteristics successfully",
+      data: result.data,
+    };
 
-//     res.status(201).json(response.data);
-//   } catch (error) {
-//     console.error("Error inserting module characteristics:", error);
-//     next(error);
-//   }
-// };
+    res.status(201).json(response.data);
+  } catch (error) {
+    console.error("Error inserting module characteristics:", error);
+    next(error);
+  }
+};
 
 export const getAllModuleCharacteristics = async (
   req: Request,
@@ -208,6 +209,16 @@ export const deleteModuleCharacteristic = async (
   }
 };
 
+export const deleteModuleCharacteristicsByIdController = async (req: Request, res: Response) => {
+  try {
+    const profile = await deleteModuleCharacteristicsById(req.params.id);
+    if (!profile) return res.status(404).json({ message: 'Not found' });
+    res.json(profile);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const updateManyModuleCharacteristics = async (
   req: Request,
   res: Response,
@@ -233,17 +244,11 @@ export const updateManyModuleCharacteristics = async (
       }
     }
 
-    // Perform updates sequentially or in parallel
+    // Perform updates in parallel
     const updatePromises = items.map(async (item) => {
       const mutation = `
-        mutation {
-          moduleCharacteristic_update(
-            id: "${item.id}",
-            data: {
-              ${item.characteristicType ? `characteristicType: ${item.characteristicType},` : ""}
-              ${item.value !== undefined ? `value: ${item.value}` : ""}
-            }
-          ) {
+        mutation UpdateModuleCharacteristic($id: String!, $data: ModuleCharacteristic_UpdateInput!) {
+          moduleCharacteristic_update(id: $id, data: $data) {
             id
             characteristicType
             value
@@ -251,7 +256,15 @@ export const updateManyModuleCharacteristics = async (
         }
       `;
 
-      return dataConnect.executeGraphql(mutation);
+      const variables = {
+        id: item.id,
+        data: {
+          ...(item.characteristicType && { characteristicType: item.characteristicType }),
+          ...(item.value !== undefined && { value: item.value }),
+        },
+      };
+
+      return dataConnect.executeGraphql(mutation, { variables });
     });
 
     const results = await Promise.all(updatePromises);
@@ -262,60 +275,6 @@ export const updateManyModuleCharacteristics = async (
       data: results.map((r) => r.data),
     });
   } catch (error) {
-    next(error);
-  }
-};
-
-export const createManyModuleCharacteristics = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { items } = req.body;
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Request body must include a non-empty 'items' array",
-      });
-    }
-
-    // Prepare data with generated UUIDs
-    const itemsWithIds = items.map((item: any) => ({
-      id: crypto.randomUUID(),
-      moduleProfileId: item.moduleProfileId,
-      characteristicType: item.characteristicType,
-      value: item.value,
-    }));
-
-    // Build GraphQL mutation input syntax
-    const valuesString = itemsWithIds
-      .map(
-        (item) => `{
-          id: "${item.id}",
-          moduleProfile: { id: "${item.moduleProfileId}" },
-          characteristicType: ${item.characteristicType},
-          value: ${item.value ?? 0}
-        }`
-      )
-      .join(", ");
-
-    const mutation = `
-      mutation {
-        moduleCharacteristic_insertMany(data: [${valuesString}])
-      }
-    `;
-
-    const result = await dataConnect.executeGraphql(mutation);
-
-    res.status(201).json({
-      success: true,
-      message: "Created characteristics successfully",
-      data: result.data,
-    });
-  } catch (error) {
-    console.error("Error inserting module characteristics:", error);
     next(error);
   }
 };

@@ -1,13 +1,13 @@
 import { dataConnect } from "../config/dataConnectClient";
 
 interface ModuleProfileInput {
-  id: string;
+  // id: string;
   name: string;
   projectId: string;
 }
 
 // Create
-export const createModuleProfile = async (input: ModuleProfileInput) => {
+export const createModuleProfile = async (input: ModuleProfileInput & { id: string }) => {
   const query = `
     mutation CreateModuleProfile($id: String! ,$name: String!, $projectId: String!) {
       moduleProfile_insert(

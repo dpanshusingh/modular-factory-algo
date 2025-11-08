@@ -49,20 +49,38 @@ export const GET_ALL_MODULE_CHARACTERISTICS = `
 //   }
 // `;
 
-export const getModuleCharacteristicsById = async (id: string) => {
+export const getModuleCharacteristicsById = async (moduleProfileId: string) => {
   const query = `
-    query GetModuleCharacteristics($id: String!) {
-      moduleCharacteristics(ModuleCharacteristic_Filter: $id) {
+    query GetModuleCharacteristicsByProfile($moduleProfileId: String!) {
+  moduleCharacteristics(where: { moduleProfile: { id: { eq: $moduleProfileId } } }) {
+    id
+    characteristicType
+    value
+    moduleProfile {
+      id
+      name
+      project{
         id
-        characteristicType
-        value
+        name
       }
     }
+  }
+}
   `;
   const response = await dataConnect.executeGraphql(query, {
-    variables: {
-      id // wrap the plain string in a filter object
-    },
+    variables: { moduleProfileId },
+  });
+  return response.data;
+};
+ 
+export const deleteModuleCharacteristicsById = async (moduleProfileId: string) => {
+  const query = `
+    query GetModuleCharacteristicsByProfile($moduleProfileId: String!) {
+  moduleCharacteristic_delete(where: { moduleProfile: { id: { eq: $moduleProfileId } } })
+}
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { moduleProfileId },
   });
   return response.data;
 };

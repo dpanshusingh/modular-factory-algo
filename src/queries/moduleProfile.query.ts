@@ -21,6 +21,10 @@ export const GET_MODULEPROFILE_BY_ID = `
     moduleProfile(id: $id) {
       id
       name
+      project{
+      id
+      name
+      }
     }
   }
 `;
