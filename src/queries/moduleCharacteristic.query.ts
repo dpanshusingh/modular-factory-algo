@@ -88,20 +88,24 @@ export const deleteModuleCharacteristicsById = async (moduleProfileId: string) =
 
 
 export const UPDATE_MODULE_CHARACTERISTIC = `
-   mutation UpdateModuleCharacteristic(
-        $id: UUID!,
-        $value: Float,
-        $characteristicType: ModuleCharacteristicType
-      ) {
-        moduleCharacteristic_update(
-          id: $id,
-          data: {
-            value: $value,
-            characteristicType: $characteristicType
-          }
-        )
+  mutation UpdateModuleCharacteristic(
+    $id: String!,
+    $moduleProfileId: String,
+    $characteristicType: ModuleCharacteristicType,
+    $value: Float
+  ) {
+    moduleCharacteristic_update(
+      id: $id,
+      data: {
+        value: $value,
+        characteristicType: $characteristicType,
+        moduleProfile: { id: $moduleProfileId }
       }
+    )
+  }
 `;
+
+
 
 export const DELETE_MODULE_CHARACTERISTIC = `
   mutation DeleteModuleCharacteristic($id: UUID!) {
