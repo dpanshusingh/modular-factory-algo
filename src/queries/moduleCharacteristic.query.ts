@@ -38,17 +38,6 @@ export const GET_ALL_MODULE_CHARACTERISTICS = `
   }
 `;
 
-// export const GET_MODULE_CHARACTERISTIC_BY_ID = `
-//   query GetModuleCharacteristicById($id: UUID!) {
-//     moduleCharacteristic_by_pk(id: $id) {
-//       id
-//       moduleProfileId
-//       characteristicType
-//       value
-//     }
-//   }
-// `;
-
 export const getModuleCharacteristicsById = async (moduleProfileId: string) => {
   const query = `
     query GetModuleCharacteristicsByProfile($moduleProfileId: String!) {

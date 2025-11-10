@@ -10,6 +10,8 @@ import { ENV } from "./config/envConfig";
 import { projectRoutes } from "./routes/project.route";
 import { moduleCharacteristicsRoutes } from "./routes/moduleCharacteristic.route";
 import { moduleProfileRoutes } from "./routes/moduleProfile.route";
+import { inspectionAreaRoutes } from "./routes/inspectionArea.route";
+import {stationRoutes } from "./routes/station.routes";
 
 
 const app = express();
@@ -40,6 +42,8 @@ app.use("/api/timelogs", timelogRoutes);
 app.use("/api/projects",projectRoutes);
 app.use("/api/moduleCharacteristics",moduleCharacteristicsRoutes)
 app.use("/api/moduleProfiles", moduleProfileRoutes)
+app.use("/api/inspectionArea", inspectionAreaRoutes)
+app.use("/api/station", stationRoutes)
 
 app.use(errorMiddleware);
 

@@ -50,9 +50,7 @@ export const getModuleProfileByIdController = async (req: Request, res: Response
 export const updateModuleProfileController = async (req: Request, res: Response) => {
   try {
     const profile = await updateModuleProfile(req.params.id, req.body);
-    res.json(profile);
-    console.log("module profile update hit");
-    
+    res.json(profile);    
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

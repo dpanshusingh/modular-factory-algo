@@ -5,11 +5,11 @@ import serviceAccount from "../../vederra-7c271-firebase-adminsdk-fbsvc-759bcea1
 if (!getApps().length) {
   initializeApp({
     credential: cert(serviceAccount as any),
-    projectId: "vederra-7c271",
+    projectId: "vederra-dev-d4327",
   });
 }
 
 export const dataConnect = getDataConnect({
-  serviceId: "vos-web-1",
+  serviceId: "vederra-dev-d4327-service",
   location: "us-central1",
 });
