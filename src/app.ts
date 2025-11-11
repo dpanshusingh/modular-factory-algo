@@ -12,6 +12,7 @@ import { moduleCharacteristicsRoutes } from "./routes/moduleCharacteristic.route
 import { moduleProfileRoutes } from "./routes/moduleProfile.route";
 import { inspectionAreaRoutes } from "./routes/inspectionArea.route";
 import {stationRoutes } from "./routes/station.routes";
+import { taskTemplateRoutes } from "./routes/taskTemplate.route";
 
 
 const app = express();
@@ -44,6 +45,7 @@ app.use("/api/moduleCharacteristics",moduleCharacteristicsRoutes)
 app.use("/api/moduleProfiles", moduleProfileRoutes)
 app.use("/api/inspectionArea", inspectionAreaRoutes)
 app.use("/api/station", stationRoutes)
+app.use("/api/taskTemplate", taskTemplateRoutes)
 
 app.use(errorMiddleware);
 

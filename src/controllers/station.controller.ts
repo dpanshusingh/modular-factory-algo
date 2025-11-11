@@ -61,12 +61,13 @@ export const updateStationController = async (req: Request, res: Response) => {
 // Delete Station
 export const deleteStationController = async (req: Request, res: Response) => {
   try {
-    await deleteStation(req.params.id);
+    const station = await deleteStation(req.params.id);
     res.status(204).json({
         success: true,
-        message: "Station deleted successfully"
+        message: "Station deleted successfully",
+        data: station
     });
-  } catch (error: any) {
+  } catch (error: any) {  
     res.status(500).json({ error: error.message });
   }
 };
