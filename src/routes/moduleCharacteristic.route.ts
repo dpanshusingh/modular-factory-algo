@@ -15,13 +15,13 @@ const router = Router();
 
 router.use(apiLimiter);
 
-router.post("/", createModuleCharacteristic);
-router.get("/", getAllModuleCharacteristics);
+router.post("/", createModuleCharacteristic); // used
+router.get("/", getAllModuleCharacteristics); //
 router.post("/many", createManyModuleCharacteristics);
-router.get("/many/:id", getModuleCharacteristicsByIdController);
-router.put("/:id", updateModuleCharacteristic);
+router.get("/many/:id", getModuleCharacteristicsByIdController); //used
+router.put("/:id", updateModuleCharacteristic); //used
 router.delete("/:id", deleteModuleCharacteristic);
-router.delete("/many/:id", deleteModuleCharacteristicsByIdController);
+router.delete("/many/:id", deleteModuleCharacteristicsByIdController); //used
 
 // router.put("/updatemany",updateManyModuleCharacteristics)
 export { router as moduleCharacteristicsRoutes };
