@@ -3,12 +3,12 @@ import { dataConnect } from "../config/dataConnectClient";
 import {
   CREATE_MODULE_CHARACTERISTIC,
   DELETE_MODULE_CHARACTERISTIC,
-  deleteModuleCharacteristicsById,
+  DELETE_MODULE_CHARACTERISTICS_BY_ID,
   GET_ALL_MODULE_CHARACTERISTICS,
-  getModuleCharacteristicsById,
+  GET_MODULE_CHARACTERISTICS_BY_ID,
   UPDATE_MODULE_CHARACTERISTIC,
 } from "../queries/moduleCharacteristic.query";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { ApiResponse } from "../types/@server";
 
 export const createModuleCharacteristic = async (
@@ -129,16 +129,18 @@ export const getAllModuleCharacteristics = async (
   }
 };
 
-export const getModuleCharacteristicsByIdController = async (req: Request, res: Response) => {
+export const getModuleCharacteristicsByIdController = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const profile = await getModuleCharacteristicsById(req.params.id);
-    if (!profile) return res.status(404).json({ message: 'Not found' });
+    const profile = await GET_MODULE_CHARACTERISTICS_BY_ID(req.params.id);
+    if (!profile) return res.status(404).json({ message: "Not found" });
     res.json(profile);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 };
-
 
 export const updateModuleCharacteristic = async (
   req: Request,
@@ -146,7 +148,7 @@ export const updateModuleCharacteristic = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const {id} = req.params;
+    const { id } = req.params;
     const { characteristicType, value, moduleProfileId } = req.body;
 
     if (!id) {
@@ -177,43 +179,6 @@ export const updateModuleCharacteristic = async (
     res.status(200).json(response.data);
   } catch (error) {
     next(error);
-  }
-};
-
-
-export const deleteModuleCharacteristic = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<any> => {
-  try {
-    const { id } = req.params;
-    const result = await dataConnect.executeGraphql(
-      DELETE_MODULE_CHARACTERISTIC,
-      {
-        variables: { id },
-      }
-    );
-
-    const response: ApiResponse = {
-      success: true,
-      message: "Deleted characteristic successfully",
-      data: result.data,
-    };
-
-    res.status(201).json(response.data);
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const deleteModuleCharacteristicsByIdController = async (req: Request, res: Response) => {
-  try {
-    const profile = await deleteModuleCharacteristicsById(req.params.id);
-    if (!profile) return res.status(404).json({ message: 'Not found' });
-    res.json(profile);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
   }
 };
 
@@ -257,7 +222,9 @@ export const updateManyModuleCharacteristics = async (
       const variables = {
         id: item.id,
         data: {
-          ...(item.characteristicType && { characteristicType: item.characteristicType }),
+          ...(item.characteristicType && {
+            characteristicType: item.characteristicType,
+          }),
           ...(item.value !== undefined && { value: item.value }),
         },
       };
@@ -274,5 +241,44 @@ export const updateManyModuleCharacteristics = async (
     });
   } catch (error) {
     next(error);
+  }
+};
+
+export const deleteModuleCharacteristic = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const result = await dataConnect.executeGraphql(
+      DELETE_MODULE_CHARACTERISTIC,
+      {
+        variables: { id },
+      }
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      message: "Deleted characteristic successfully",
+      data: result.data,
+    };
+
+    res.status(201).json(response.data);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteModuleCharacteristicsByIdController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const profile = await DELETE_MODULE_CHARACTERISTICS_BY_ID(req.params.id);
+    if (!profile) return res.status(404).json({ message: "Not found" });
+    res.json(profile);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };

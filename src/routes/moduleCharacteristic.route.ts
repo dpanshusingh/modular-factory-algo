@@ -7,21 +7,43 @@ import {
   deleteModuleCharacteristicsByIdController,
   getAllModuleCharacteristics,
   getModuleCharacteristicsByIdController,
-  updateManyModuleCharacteristics,
   updateModuleCharacteristic,
 } from "../controllers/moduleCharacteristic.controller";
+import { authenticateToken } from "../middlewares/authMiddleware";
+import { validateRequest } from "../middlewares/validateRequest";
+import {
+  createModuleCharacteristicSchema,
+  deleteModuleCharacteristicSchema,
+  updateModuleCharacteristicSchema,
+} from "../utils/validators/moduleCharacteristicsValidation";
 
 const router = Router();
 
 router.use(apiLimiter);
+router.use(authenticateToken);
 
-router.post("/", createModuleCharacteristic); // used
-router.get("/", getAllModuleCharacteristics); //
-router.post("/many", createManyModuleCharacteristics);
-router.get("/many/:id", getModuleCharacteristicsByIdController); //used
-router.put("/:id", updateModuleCharacteristic); //used
-router.delete("/:id", deleteModuleCharacteristic);
-router.delete("/many/:id", deleteModuleCharacteristicsByIdController); //used
+router.post(
+  "/",
+  validateRequest(createModuleCharacteristicSchema),
+  createModuleCharacteristic
+);
+router.post(
+  "/many",
+  validateRequest(createModuleCharacteristicSchema),
+  createManyModuleCharacteristics
+);
+router.get("/", getAllModuleCharacteristics);
+router.get("/:id", getModuleCharacteristicsByIdController);
+router.put(
+  "/:id",
+  validateRequest(updateModuleCharacteristicSchema),
+  updateModuleCharacteristic
+);
+router.delete(
+  "/:id",
+  validateRequest(deleteModuleCharacteristicSchema),
+  deleteModuleCharacteristic
+);
+router.delete("/many/:id", deleteModuleCharacteristicsByIdController);
 
-// router.put("/updatemany",updateManyModuleCharacteristics)
 export { router as moduleCharacteristicsRoutes };
