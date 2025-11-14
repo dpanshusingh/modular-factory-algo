@@ -26,7 +26,6 @@ export const CREATE_MODULE_CHARACTERISTIC_MANY = `
   }
 `;
 
-
 export const GET_ALL_MODULE_CHARACTERISTICS = `
   query GetModuleCharacteristics {
     moduleCharacteristics {
@@ -38,18 +37,9 @@ export const GET_ALL_MODULE_CHARACTERISTICS = `
   }
 `;
 
-// export const GET_MODULE_CHARACTERISTIC_BY_ID = `
-//   query GetModuleCharacteristicById($id: UUID!) {
-//     moduleCharacteristic_by_pk(id: $id) {
-//       id
-//       moduleProfileId
-//       characteristicType
-//       value
-//     }
-//   }
-// `;
-
-export const getModuleCharacteristicsById = async (moduleProfileId: string) => {
+export const GET_MODULE_CHARACTERISTICS_BY_ID = async (
+  moduleProfileId: string
+) => {
   const query = `
     query GetModuleCharacteristicsByProfile($moduleProfileId: String!) {
   moduleCharacteristics(where: { moduleProfile: { id: { eq: $moduleProfileId } } }) {
@@ -72,20 +62,6 @@ export const getModuleCharacteristicsById = async (moduleProfileId: string) => {
   });
   return response.data;
 };
- 
-export const deleteModuleCharacteristicsById = async (moduleProfileId: string) => {
-  const query = `
-    query GetModuleCharacteristicsByProfile($moduleProfileId: String!) {
-  moduleCharacteristic_delete(where: { moduleProfile: { id: { eq: $moduleProfileId } } })
-}
-  `;
-  const response = await dataConnect.executeGraphql(query, {
-    variables: { moduleProfileId },
-  });
-  return response.data;
-};
-
-
 
 export const UPDATE_MODULE_CHARACTERISTIC = `
   mutation UpdateModuleCharacteristic(
@@ -105,10 +81,22 @@ export const UPDATE_MODULE_CHARACTERISTIC = `
   }
 `;
 
-
-
 export const DELETE_MODULE_CHARACTERISTIC = `
   mutation DeleteModuleCharacteristic($id: UUID!) {
         moduleCharacteristic_delete(id: $id)
       }
 `;
+
+export const DELETE_MODULE_CHARACTERISTICS_BY_ID = async (
+  moduleProfileId: string
+) => {
+  const query = `
+    mutation DeleteModuleCharacteristicsByProfile($moduleProfileId: String!) {
+  moduleCharacteristic_deleteMany(where: { moduleProfile: { id: { eq: $moduleProfileId } } })
+}
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { moduleProfileId },
+  });
+  return response.data;
+};
