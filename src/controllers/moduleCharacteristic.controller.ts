@@ -1,13 +1,15 @@
 import { Request, Response, NextFunction } from "express";
-import { dataConnect } from "../../config/dataConnectClient";
+import { dataConnect } from "../config/dataConnectClient";
 import {
   CREATE_MODULE_CHARACTERISTIC,
   DELETE_MODULE_CHARACTERISTIC,
+  deleteModuleCharacteristicsById,
   GET_ALL_MODULE_CHARACTERISTICS,
+  getModuleCharacteristicsById,
   UPDATE_MODULE_CHARACTERISTIC,
-} from "../../queries/moduleCharacteristic.query";
-import crypto from "crypto";
-import { ApiResponse } from "../../types/@server";
+} from "../queries/moduleCharacteristic.query";
+import { v4 as uuidv4 } from 'uuid';
+import { ApiResponse } from "../types/@server";
 
 export const createModuleCharacteristic = async (
   req: Request,
@@ -127,33 +129,41 @@ export const getAllModuleCharacteristics = async (
   }
 };
 
+export const getModuleCharacteristicsByIdController = async (req: Request, res: Response) => {
+  try {
+    const profile = await getModuleCharacteristicsById(req.params.id);
+    if (!profile) return res.status(404).json({ message: 'Not found' });
+    res.json(profile);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
 export const updateModuleCharacteristic = async (
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<any> => {
   try {
-    const { id } = req.params;
-    const { value, characteristicType } = req.body;
+    const {id} = req.params;
+    const { characteristicType, value, moduleProfileId } = req.body;
 
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "id is required to update ModuleCharacteristic",
+        message: "id is required for update",
       });
     }
-
-    const updateData: any = {};
-    if (value !== undefined) updateData.value = parseFloat(value);
-    if (characteristicType) updateData.characteristicType = characteristicType;
 
     const result = await dataConnect.executeGraphql(
       UPDATE_MODULE_CHARACTERISTIC,
       {
         variables: {
           id,
-          value: value ? parseFloat(value) : null,
+          moduleProfileId,
           characteristicType: characteristicType || null,
+          value: value ? parseFloat(value) : null,
         },
       }
     );
@@ -164,11 +174,12 @@ export const updateModuleCharacteristic = async (
       data: result.data,
     };
 
-    res.status(201).json(response.data);
+    res.status(200).json(response.data);
   } catch (error) {
     next(error);
   }
 };
+
 
 export const deleteModuleCharacteristic = async (
   req: Request,
@@ -193,6 +204,16 @@ export const deleteModuleCharacteristic = async (
     res.status(201).json(response.data);
   } catch (error) {
     next(error);
+  }
+};
+
+export const deleteModuleCharacteristicsByIdController = async (req: Request, res: Response) => {
+  try {
+    const profile = await deleteModuleCharacteristicsById(req.params.id);
+    if (!profile) return res.status(404).json({ message: 'Not found' });
+    res.json(profile);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -221,17 +242,11 @@ export const updateManyModuleCharacteristics = async (
       }
     }
 
-    // Perform updates sequentially or in parallel
+    // Perform updates in parallel
     const updatePromises = items.map(async (item) => {
       const mutation = `
-        mutation {
-          moduleCharacteristic_update(
-            id: "${item.id}",
-            data: {
-              ${item.characteristicType ? `characteristicType: ${item.characteristicType},` : ""}
-              ${item.value !== undefined ? `value: ${item.value}` : ""}
-            }
-          ) {
+        mutation UpdateModuleCharacteristic($id: String!, $data: ModuleCharacteristic_UpdateInput!) {
+          moduleCharacteristic_update(id: $id, data: $data) {
             id
             characteristicType
             value
@@ -239,7 +254,15 @@ export const updateManyModuleCharacteristics = async (
         }
       `;
 
-      return dataConnect.executeGraphql(mutation);
+      const variables = {
+        id: item.id,
+        data: {
+          ...(item.characteristicType && { characteristicType: item.characteristicType }),
+          ...(item.value !== undefined && { value: item.value }),
+        },
+      };
+
+      return dataConnect.executeGraphql(mutation, { variables });
     });
 
     const results = await Promise.all(updatePromises);
@@ -253,4 +276,3 @@ export const updateManyModuleCharacteristics = async (
     next(error);
   }
 };
-

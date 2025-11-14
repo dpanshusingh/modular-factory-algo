@@ -7,9 +7,9 @@ import { userRoutes } from "./routes/userRoutes";
 import { employeeRoutes } from "./routes/employeeRoutes";
 import { timelogRoutes } from "./routes/timelogRoutes";
 import { ENV } from "./config/envConfig";
-import { projectRoutes } from "./routes/projectRoute";
-import { moduleProfileRoutes } from "./routes/mouleProfileRoutes";
-import { moduleCharacteristicsRoutes } from "./routes/moduleCharacteristicRoutes";
+import { projectRoutes } from "./routes/project.route";
+import { moduleCharacteristicsRoutes } from "./routes/moduleCharacteristic.route";
+import { moduleProfileRoutes } from "./routes/moduleProfile.route";
 
 
 const app = express();
@@ -18,8 +18,8 @@ const app = express();
 app.use(generalLimiter);
 
 app.use(cookieParser());
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/public", express.static("public"));
 app.use(
   cors({
@@ -38,8 +38,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/timelogs", timelogRoutes);
 app.use("/api/projects",projectRoutes);
-app.use("/api/moduleProfiles", moduleProfileRoutes)
 app.use("/api/moduleCharacteristics",moduleCharacteristicsRoutes)
+app.use("/api/moduleProfiles", moduleProfileRoutes)
 
 app.use(errorMiddleware);
 
