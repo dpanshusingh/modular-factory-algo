@@ -9,22 +9,22 @@ This README will guide you through the process of using the generated JavaScript
   - [*Connecting to the local Emulator*](#connecting-to-the-local-emulator)
 - [**Queries**](#queries)
   - [*GetNotes*](#getnotes)
-  - [*GetNotesByTraveler*](#getnotesbytraveler)
   - [*GetTravelerTemplates*](#gettravelertemplates)
   - [*GetStations*](#getstations)
   - [*GetStationById*](#getstationbyid)
-  - [*GetTraveler*](#gettraveler)
+  - [*GetTravelers*](#gettravelers)
   - [*GetTravelerById*](#gettravelerbyid)
   - [*GetTravelerStations*](#gettravelerstations)
   - [*GetTravelerStationsByTraveler*](#gettravelerstationsbytraveler)
-  - [*GetCurrentTravelerStations*](#getcurrenttravelerstations)
-  - [*GetTravelerStationsQamProgress*](#gettravelerstationsqamprogress)
+  - [*GetWorkers*](#getworkers)
+  - [*GetWorkerTasks*](#getworkertasks)
+  - [*GetTasks*](#gettasks)
 - [**Mutations**](#mutations)
   - [*AddNote*](#addnote)
   - [*CreateTravelerTemplate*](#createtravelertemplate)
   - [*CreateStation*](#createstation)
   - [*TravelerStation*](#travelerstation)
-  - [*traveler*](#traveler)
+  - [*Traveler*](#traveler)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `vos-web`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -109,10 +109,7 @@ The `data` property is an object of type `GetNotesData`, which is defined in [da
 ```typescript
 export interface GetNotesData {
   notes: ({
-    id: UUIDString;
-    inspectionItemId?: UUIDString | null;
-    taskId?: UUIDString | null;
-    travelerId?: UUIDString | null;
+    id: string;
     text?: string | null;
     type?: NoteType | null;
   } & Note_Key)[];
@@ -169,122 +166,6 @@ executeQuery(ref).then((response) => {
 });
 ```
 
-## GetNotesByTraveler
-You can execute the `GetNotesByTraveler` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
-```typescript
-getNotesByTraveler(vars: GetNotesByTravelerVariables): QueryPromise<GetNotesByTravelerData, GetNotesByTravelerVariables>;
-
-interface GetNotesByTravelerRef {
-  ...
-  /* Allow users to create refs without passing in DataConnect */
-  (vars: GetNotesByTravelerVariables): QueryRef<GetNotesByTravelerData, GetNotesByTravelerVariables>;
-}
-export const getNotesByTravelerRef: GetNotesByTravelerRef;
-```
-You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
-```typescript
-getNotesByTraveler(dc: DataConnect, vars: GetNotesByTravelerVariables): QueryPromise<GetNotesByTravelerData, GetNotesByTravelerVariables>;
-
-interface GetNotesByTravelerRef {
-  ...
-  (dc: DataConnect, vars: GetNotesByTravelerVariables): QueryRef<GetNotesByTravelerData, GetNotesByTravelerVariables>;
-}
-export const getNotesByTravelerRef: GetNotesByTravelerRef;
-```
-
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getNotesByTravelerRef:
-```typescript
-const name = getNotesByTravelerRef.operationName;
-console.log(name);
-```
-
-### Variables
-The `GetNotesByTraveler` query requires an argument of type `GetNotesByTravelerVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
-
-```typescript
-export interface GetNotesByTravelerVariables {
-  travelerId: UUIDString;
-}
-```
-### Return Type
-Recall that executing the `GetNotesByTraveler` query returns a `QueryPromise` that resolves to an object with a `data` property.
-
-The `data` property is an object of type `GetNotesByTravelerData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
-```typescript
-export interface GetNotesByTravelerData {
-  notes: ({
-    id: UUIDString;
-    inspectionItemId?: UUIDString | null;
-    taskId?: UUIDString | null;
-    travelerId?: UUIDString | null;
-    text?: string | null;
-    type?: NoteType | null;
-  } & Note_Key)[];
-}
-```
-### Using `GetNotesByTraveler`'s action shortcut function
-
-```typescript
-import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, getNotesByTraveler, GetNotesByTravelerVariables } from '@dataconnect/generated';
-
-// The `GetNotesByTraveler` query requires an argument of type `GetNotesByTravelerVariables`:
-const getNotesByTravelerVars: GetNotesByTravelerVariables = {
-  travelerId: ..., 
-};
-
-// Call the `getNotesByTraveler()` function to execute the query.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await getNotesByTraveler(getNotesByTravelerVars);
-// Variables can be defined inline as well.
-const { data } = await getNotesByTraveler({ travelerId: ..., });
-
-// You can also pass in a `DataConnect` instance to the action shortcut function.
-const dataConnect = getDataConnect(connectorConfig);
-const { data } = await getNotesByTraveler(dataConnect, getNotesByTravelerVars);
-
-console.log(data.notes);
-
-// Or, you can use the `Promise` API.
-getNotesByTraveler(getNotesByTravelerVars).then((response) => {
-  const data = response.data;
-  console.log(data.notes);
-});
-```
-
-### Using `GetNotesByTraveler`'s `QueryRef` function
-
-```typescript
-import { getDataConnect, executeQuery } from 'firebase/data-connect';
-import { connectorConfig, getNotesByTravelerRef, GetNotesByTravelerVariables } from '@dataconnect/generated';
-
-// The `GetNotesByTraveler` query requires an argument of type `GetNotesByTravelerVariables`:
-const getNotesByTravelerVars: GetNotesByTravelerVariables = {
-  travelerId: ..., 
-};
-
-// Call the `getNotesByTravelerRef()` function to get a reference to the query.
-const ref = getNotesByTravelerRef(getNotesByTravelerVars);
-// Variables can be defined inline as well.
-const ref = getNotesByTravelerRef({ travelerId: ..., });
-
-// You can also pass in a `DataConnect` instance to the `QueryRef` function.
-const dataConnect = getDataConnect(connectorConfig);
-const ref = getNotesByTravelerRef(dataConnect, getNotesByTravelerVars);
-
-// Call `executeQuery()` on the reference to execute the query.
-// You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await executeQuery(ref);
-
-console.log(data.notes);
-
-// Or, you can use the `Promise` API.
-executeQuery(ref).then((response) => {
-  const data = response.data;
-  console.log(data.notes);
-});
-```
-
 ## GetTravelerTemplates
 You can execute the `GetTravelerTemplates` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
@@ -323,7 +204,7 @@ The `data` property is an object of type `GetTravelerTemplatesData`, which is de
 ```typescript
 export interface GetTravelerTemplatesData {
   travelerTemplates: ({
-    id: UUIDString;
+    id: string;
     name?: string | null;
   } & TravelerTemplate_Key)[];
 }
@@ -417,8 +298,7 @@ The `data` property is an object of type `GetStationsData`, which is defined in 
 ```typescript
 export interface GetStationsData {
   stations: ({
-    id: UUIDString;
-    taskTemplateId?: UUIDString | null;
+    id: string;
     name?: string | null;
     order?: number | null;
     doesReceiveTravelers?: boolean | null;
@@ -510,7 +390,7 @@ The `GetStationById` query requires an argument of type `GetStationByIdVariables
 
 ```typescript
 export interface GetStationByIdVariables {
-  id: UUIDString;
+  id: string;
 }
 ```
 ### Return Type
@@ -520,8 +400,7 @@ The `data` property is an object of type `GetStationByIdData`, which is defined 
 ```typescript
 export interface GetStationByIdData {
   station?: {
-    id: UUIDString;
-    taskTemplateId?: UUIDString | null;
+    id: string;
     name?: string | null;
     order?: number | null;
     doesReceiveTravelers?: boolean | null;
@@ -591,88 +470,90 @@ executeQuery(ref).then((response) => {
 });
 ```
 
-## GetTraveler
-You can execute the `GetTraveler` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+## GetTravelers
+You can execute the `GetTravelers` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
-getTraveler(): QueryPromise<GetTravelerData, undefined>;
+getTravelers(): QueryPromise<GetTravelersData, undefined>;
 
-interface GetTravelerRef {
+interface GetTravelersRef {
   ...
   /* Allow users to create refs without passing in DataConnect */
-  (): QueryRef<GetTravelerData, undefined>;
+  (): QueryRef<GetTravelersData, undefined>;
 }
-export const getTravelerRef: GetTravelerRef;
+export const getTravelersRef: GetTravelersRef;
 ```
 You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
 ```typescript
-getTraveler(dc: DataConnect): QueryPromise<GetTravelerData, undefined>;
+getTravelers(dc: DataConnect): QueryPromise<GetTravelersData, undefined>;
 
-interface GetTravelerRef {
+interface GetTravelersRef {
   ...
-  (dc: DataConnect): QueryRef<GetTravelerData, undefined>;
+  (dc: DataConnect): QueryRef<GetTravelersData, undefined>;
 }
-export const getTravelerRef: GetTravelerRef;
+export const getTravelersRef: GetTravelersRef;
 ```
 
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getTravelerRef:
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getTravelersRef:
 ```typescript
-const name = getTravelerRef.operationName;
+const name = getTravelersRef.operationName;
 console.log(name);
 ```
 
 ### Variables
-The `GetTraveler` query has no variables.
+The `GetTravelers` query has no variables.
 ### Return Type
-Recall that executing the `GetTraveler` query returns a `QueryPromise` that resolves to an object with a `data` property.
+Recall that executing the `GetTravelers` query returns a `QueryPromise` that resolves to an object with a `data` property.
 
-The `data` property is an object of type `GetTravelerData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+The `data` property is an object of type `GetTravelersData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
-export interface GetTravelerData {
+export interface GetTravelersData {
   travelers: ({
-    id: UUIDString;
+    id: string;
+    moduleProfileId?: string | null;
+    travelerTemplateId: string;
     isShipped?: boolean | null;
     notesRequiredUpload?: boolean | null;
     serialNumber?: string | null;
   } & Traveler_Key)[];
 }
 ```
-### Using `GetTraveler`'s action shortcut function
+### Using `GetTravelers`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, getTraveler } from '@dataconnect/generated';
+import { connectorConfig, getTravelers } from '@dataconnect/generated';
 
 
-// Call the `getTraveler()` function to execute the query.
+// Call the `getTravelers()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await getTraveler();
+const { data } = await getTravelers();
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
-const { data } = await getTraveler(dataConnect);
+const { data } = await getTravelers(dataConnect);
 
 console.log(data.travelers);
 
 // Or, you can use the `Promise` API.
-getTraveler().then((response) => {
+getTravelers().then((response) => {
   const data = response.data;
   console.log(data.travelers);
 });
 ```
 
-### Using `GetTraveler`'s `QueryRef` function
+### Using `GetTravelers`'s `QueryRef` function
 
 ```typescript
 import { getDataConnect, executeQuery } from 'firebase/data-connect';
-import { connectorConfig, getTravelerRef } from '@dataconnect/generated';
+import { connectorConfig, getTravelersRef } from '@dataconnect/generated';
 
 
-// Call the `getTravelerRef()` function to get a reference to the query.
-const ref = getTravelerRef();
+// Call the `getTravelersRef()` function to get a reference to the query.
+const ref = getTravelersRef();
 
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
-const ref = getTravelerRef(dataConnect);
+const ref = getTravelersRef(dataConnect);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
@@ -721,7 +602,7 @@ The `GetTravelerById` query requires an argument of type `GetTravelerByIdVariabl
 
 ```typescript
 export interface GetTravelerByIdVariables {
-  id: UUIDString;
+  id: string;
 }
 ```
 ### Return Type
@@ -731,9 +612,9 @@ The `data` property is an object of type `GetTravelerByIdData`, which is defined
 ```typescript
 export interface GetTravelerByIdData {
   traveler?: {
-    id: UUIDString;
+    id: string;
     moduleProfileId?: string | null;
-    travelerTemplateId: UUIDString;
+    travelerTemplateId: string;
     isShipped?: boolean | null;
     notesRequiredUpload?: boolean | null;
     serialNumber?: string | null;
@@ -841,9 +722,9 @@ The `data` property is an object of type `GetTravelerStationsData`, which is def
 ```typescript
 export interface GetTravelerStationsData {
   travelerStations: ({
-    id: UUIDString;
-    stationId: UUIDString;
-    travelerId: UUIDString;
+    id: string;
+    travelerId: string;
+    stationId: string;
     leadInspectionProgress?: number | null;
     qamInspectionProgress?: number | null;
     taskProgress?: number | null;
@@ -936,7 +817,7 @@ The `GetTravelerStationsByTraveler` query requires an argument of type `GetTrave
 
 ```typescript
 export interface GetTravelerStationsByTravelerVariables {
-  travelerId: UUIDString;
+  travelerId: string;
 }
 ```
 ### Return Type
@@ -946,9 +827,9 @@ The `data` property is an object of type `GetTravelerStationsByTravelerData`, wh
 ```typescript
 export interface GetTravelerStationsByTravelerData {
   travelerStations: ({
-    id: UUIDString;
-    stationId: UUIDString;
-    travelerId: UUIDString;
+    id: string;
+    travelerId: string;
+    stationId: string;
     leadInspectionProgress?: number | null;
     qamInspectionProgress?: number | null;
     taskProgress?: number | null;
@@ -1019,232 +900,295 @@ executeQuery(ref).then((response) => {
 });
 ```
 
-## GetCurrentTravelerStations
-You can execute the `GetCurrentTravelerStations` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+## GetWorkers
+You can execute the `GetWorkers` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
-getCurrentTravelerStations(vars: GetCurrentTravelerStationsVariables): QueryPromise<GetCurrentTravelerStationsData, GetCurrentTravelerStationsVariables>;
+getWorkers(): QueryPromise<GetWorkersData, undefined>;
 
-interface GetCurrentTravelerStationsRef {
+interface GetWorkersRef {
   ...
   /* Allow users to create refs without passing in DataConnect */
-  (vars: GetCurrentTravelerStationsVariables): QueryRef<GetCurrentTravelerStationsData, GetCurrentTravelerStationsVariables>;
+  (): QueryRef<GetWorkersData, undefined>;
 }
-export const getCurrentTravelerStationsRef: GetCurrentTravelerStationsRef;
+export const getWorkersRef: GetWorkersRef;
 ```
 You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
 ```typescript
-getCurrentTravelerStations(dc: DataConnect, vars: GetCurrentTravelerStationsVariables): QueryPromise<GetCurrentTravelerStationsData, GetCurrentTravelerStationsVariables>;
+getWorkers(dc: DataConnect): QueryPromise<GetWorkersData, undefined>;
 
-interface GetCurrentTravelerStationsRef {
+interface GetWorkersRef {
   ...
-  (dc: DataConnect, vars: GetCurrentTravelerStationsVariables): QueryRef<GetCurrentTravelerStationsData, GetCurrentTravelerStationsVariables>;
+  (dc: DataConnect): QueryRef<GetWorkersData, undefined>;
 }
-export const getCurrentTravelerStationsRef: GetCurrentTravelerStationsRef;
+export const getWorkersRef: GetWorkersRef;
 ```
 
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getCurrentTravelerStationsRef:
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getWorkersRef:
 ```typescript
-const name = getCurrentTravelerStationsRef.operationName;
+const name = getWorkersRef.operationName;
 console.log(name);
 ```
 
 ### Variables
-The `GetCurrentTravelerStations` query requires an argument of type `GetCurrentTravelerStationsVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
-
-```typescript
-export interface GetCurrentTravelerStationsVariables {
-  travelerId: UUIDString;
-}
-```
+The `GetWorkers` query has no variables.
 ### Return Type
-Recall that executing the `GetCurrentTravelerStations` query returns a `QueryPromise` that resolves to an object with a `data` property.
+Recall that executing the `GetWorkers` query returns a `QueryPromise` that resolves to an object with a `data` property.
 
-The `data` property is an object of type `GetCurrentTravelerStationsData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+The `data` property is an object of type `GetWorkersData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
-export interface GetCurrentTravelerStationsData {
-  travelerStations: ({
-    id: UUIDString;
-    stationId: UUIDString;
-    travelerId: UUIDString;
-    leadInspectionProgress?: number | null;
-    qamInspectionProgress?: number | null;
-    taskProgress?: number | null;
-    isCurrent?: boolean | null;
-  } & TravelerStation_Key)[];
+export interface GetWorkersData {
+  workers: ({
+    id: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    role?: WorkerRole | null;
+    employeeId?: string | null;
+  } & Worker_Key)[];
 }
 ```
-### Using `GetCurrentTravelerStations`'s action shortcut function
+### Using `GetWorkers`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, getCurrentTravelerStations, GetCurrentTravelerStationsVariables } from '@dataconnect/generated';
+import { connectorConfig, getWorkers } from '@dataconnect/generated';
 
-// The `GetCurrentTravelerStations` query requires an argument of type `GetCurrentTravelerStationsVariables`:
-const getCurrentTravelerStationsVars: GetCurrentTravelerStationsVariables = {
-  travelerId: ..., 
-};
 
-// Call the `getCurrentTravelerStations()` function to execute the query.
+// Call the `getWorkers()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await getCurrentTravelerStations(getCurrentTravelerStationsVars);
-// Variables can be defined inline as well.
-const { data } = await getCurrentTravelerStations({ travelerId: ..., });
+const { data } = await getWorkers();
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
-const { data } = await getCurrentTravelerStations(dataConnect, getCurrentTravelerStationsVars);
+const { data } = await getWorkers(dataConnect);
 
-console.log(data.travelerStations);
+console.log(data.workers);
 
 // Or, you can use the `Promise` API.
-getCurrentTravelerStations(getCurrentTravelerStationsVars).then((response) => {
+getWorkers().then((response) => {
   const data = response.data;
-  console.log(data.travelerStations);
+  console.log(data.workers);
 });
 ```
 
-### Using `GetCurrentTravelerStations`'s `QueryRef` function
+### Using `GetWorkers`'s `QueryRef` function
 
 ```typescript
 import { getDataConnect, executeQuery } from 'firebase/data-connect';
-import { connectorConfig, getCurrentTravelerStationsRef, GetCurrentTravelerStationsVariables } from '@dataconnect/generated';
+import { connectorConfig, getWorkersRef } from '@dataconnect/generated';
 
-// The `GetCurrentTravelerStations` query requires an argument of type `GetCurrentTravelerStationsVariables`:
-const getCurrentTravelerStationsVars: GetCurrentTravelerStationsVariables = {
-  travelerId: ..., 
-};
 
-// Call the `getCurrentTravelerStationsRef()` function to get a reference to the query.
-const ref = getCurrentTravelerStationsRef(getCurrentTravelerStationsVars);
-// Variables can be defined inline as well.
-const ref = getCurrentTravelerStationsRef({ travelerId: ..., });
+// Call the `getWorkersRef()` function to get a reference to the query.
+const ref = getWorkersRef();
 
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
-const ref = getCurrentTravelerStationsRef(dataConnect, getCurrentTravelerStationsVars);
+const ref = getWorkersRef(dataConnect);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeQuery(ref);
 
-console.log(data.travelerStations);
+console.log(data.workers);
 
 // Or, you can use the `Promise` API.
 executeQuery(ref).then((response) => {
   const data = response.data;
-  console.log(data.travelerStations);
+  console.log(data.workers);
 });
 ```
 
-## GetTravelerStationsQamProgress
-You can execute the `GetTravelerStationsQamProgress` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+## GetWorkerTasks
+You can execute the `GetWorkerTasks` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
-getTravelerStationsQamProgress(vars: GetTravelerStationsQamProgressVariables): QueryPromise<GetTravelerStationsQamProgressData, GetTravelerStationsQamProgressVariables>;
+getWorkerTasks(): QueryPromise<GetWorkerTasksData, undefined>;
 
-interface GetTravelerStationsQamProgressRef {
+interface GetWorkerTasksRef {
   ...
   /* Allow users to create refs without passing in DataConnect */
-  (vars: GetTravelerStationsQamProgressVariables): QueryRef<GetTravelerStationsQamProgressData, GetTravelerStationsQamProgressVariables>;
+  (): QueryRef<GetWorkerTasksData, undefined>;
 }
-export const getTravelerStationsQamProgressRef: GetTravelerStationsQamProgressRef;
+export const getWorkerTasksRef: GetWorkerTasksRef;
 ```
 You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
 ```typescript
-getTravelerStationsQamProgress(dc: DataConnect, vars: GetTravelerStationsQamProgressVariables): QueryPromise<GetTravelerStationsQamProgressData, GetTravelerStationsQamProgressVariables>;
+getWorkerTasks(dc: DataConnect): QueryPromise<GetWorkerTasksData, undefined>;
 
-interface GetTravelerStationsQamProgressRef {
+interface GetWorkerTasksRef {
   ...
-  (dc: DataConnect, vars: GetTravelerStationsQamProgressVariables): QueryRef<GetTravelerStationsQamProgressData, GetTravelerStationsQamProgressVariables>;
+  (dc: DataConnect): QueryRef<GetWorkerTasksData, undefined>;
 }
-export const getTravelerStationsQamProgressRef: GetTravelerStationsQamProgressRef;
+export const getWorkerTasksRef: GetWorkerTasksRef;
 ```
 
-If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getTravelerStationsQamProgressRef:
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getWorkerTasksRef:
 ```typescript
-const name = getTravelerStationsQamProgressRef.operationName;
+const name = getWorkerTasksRef.operationName;
 console.log(name);
 ```
 
 ### Variables
-The `GetTravelerStationsQamProgress` query requires an argument of type `GetTravelerStationsQamProgressVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
-
-```typescript
-export interface GetTravelerStationsQamProgressVariables {
-  stationId: UUIDString;
-}
-```
+The `GetWorkerTasks` query has no variables.
 ### Return Type
-Recall that executing the `GetTravelerStationsQamProgress` query returns a `QueryPromise` that resolves to an object with a `data` property.
+Recall that executing the `GetWorkerTasks` query returns a `QueryPromise` that resolves to an object with a `data` property.
 
-The `data` property is an object of type `GetTravelerStationsQamProgressData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+The `data` property is an object of type `GetWorkerTasksData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
-export interface GetTravelerStationsQamProgressData {
-  travelerStations: ({
-    id: UUIDString;
-    qamInspectionProgress?: number | null;
-  } & TravelerStation_Key)[];
+export interface GetWorkerTasksData {
+  workerTasks: ({
+    id: string;
+    workerId: string;
+    taskId: string;
+    startDate?: TimestampString | null;
+    endDate?: TimestampString | null;
+  } & WorkerTask_Key)[];
 }
 ```
-### Using `GetTravelerStationsQamProgress`'s action shortcut function
+### Using `GetWorkerTasks`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
-import { connectorConfig, getTravelerStationsQamProgress, GetTravelerStationsQamProgressVariables } from '@dataconnect/generated';
+import { connectorConfig, getWorkerTasks } from '@dataconnect/generated';
 
-// The `GetTravelerStationsQamProgress` query requires an argument of type `GetTravelerStationsQamProgressVariables`:
-const getTravelerStationsQamProgressVars: GetTravelerStationsQamProgressVariables = {
-  stationId: ..., 
-};
 
-// Call the `getTravelerStationsQamProgress()` function to execute the query.
+// Call the `getWorkerTasks()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
-const { data } = await getTravelerStationsQamProgress(getTravelerStationsQamProgressVars);
-// Variables can be defined inline as well.
-const { data } = await getTravelerStationsQamProgress({ stationId: ..., });
+const { data } = await getWorkerTasks();
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
-const { data } = await getTravelerStationsQamProgress(dataConnect, getTravelerStationsQamProgressVars);
+const { data } = await getWorkerTasks(dataConnect);
 
-console.log(data.travelerStations);
+console.log(data.workerTasks);
 
 // Or, you can use the `Promise` API.
-getTravelerStationsQamProgress(getTravelerStationsQamProgressVars).then((response) => {
+getWorkerTasks().then((response) => {
   const data = response.data;
-  console.log(data.travelerStations);
+  console.log(data.workerTasks);
 });
 ```
 
-### Using `GetTravelerStationsQamProgress`'s `QueryRef` function
+### Using `GetWorkerTasks`'s `QueryRef` function
 
 ```typescript
 import { getDataConnect, executeQuery } from 'firebase/data-connect';
-import { connectorConfig, getTravelerStationsQamProgressRef, GetTravelerStationsQamProgressVariables } from '@dataconnect/generated';
+import { connectorConfig, getWorkerTasksRef } from '@dataconnect/generated';
 
-// The `GetTravelerStationsQamProgress` query requires an argument of type `GetTravelerStationsQamProgressVariables`:
-const getTravelerStationsQamProgressVars: GetTravelerStationsQamProgressVariables = {
-  stationId: ..., 
-};
 
-// Call the `getTravelerStationsQamProgressRef()` function to get a reference to the query.
-const ref = getTravelerStationsQamProgressRef(getTravelerStationsQamProgressVars);
-// Variables can be defined inline as well.
-const ref = getTravelerStationsQamProgressRef({ stationId: ..., });
+// Call the `getWorkerTasksRef()` function to get a reference to the query.
+const ref = getWorkerTasksRef();
 
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
-const ref = getTravelerStationsQamProgressRef(dataConnect, getTravelerStationsQamProgressVars);
+const ref = getWorkerTasksRef(dataConnect);
 
 // Call `executeQuery()` on the reference to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeQuery(ref);
 
-console.log(data.travelerStations);
+console.log(data.workerTasks);
 
 // Or, you can use the `Promise` API.
 executeQuery(ref).then((response) => {
   const data = response.data;
-  console.log(data.travelerStations);
+  console.log(data.workerTasks);
+});
+```
+
+## GetTasks
+You can execute the `GetTasks` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+```typescript
+getTasks(): QueryPromise<GetTasksData, undefined>;
+
+interface GetTasksRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (): QueryRef<GetTasksData, undefined>;
+}
+export const getTasksRef: GetTasksRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getTasks(dc: DataConnect): QueryPromise<GetTasksData, undefined>;
+
+interface GetTasksRef {
+  ...
+  (dc: DataConnect): QueryRef<GetTasksData, undefined>;
+}
+export const getTasksRef: GetTasksRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getTasksRef:
+```typescript
+const name = getTasksRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetTasks` query has no variables.
+### Return Type
+Recall that executing the `GetTasks` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetTasksData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetTasksData {
+  tasks: ({
+    id: string;
+    travelerId: string;
+    taskTemplateId: string;
+    leadStatus?: TaskStatus | null;
+    qamStatus?: TaskStatus | null;
+    createdAt: TimestampString;
+  } & Task_Key)[];
+}
+```
+### Using `GetTasks`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getTasks } from '@dataconnect/generated';
+
+
+// Call the `getTasks()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getTasks();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getTasks(dataConnect);
+
+console.log(data.tasks);
+
+// Or, you can use the `Promise` API.
+getTasks().then((response) => {
+  const data = response.data;
+  console.log(data.tasks);
+});
+```
+
+### Using `GetTasks`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getTasksRef } from '@dataconnect/generated';
+
+
+// Call the `getTasksRef()` function to get a reference to the query.
+const ref = getTasksRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getTasksRef(dataConnect);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.tasks);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.tasks);
 });
 ```
 
@@ -1297,10 +1241,7 @@ The `AddNote` mutation requires an argument of type `AddNoteVariables`, which is
 
 ```typescript
 export interface AddNoteVariables {
-  id: UUIDString;
-  inspectionItemId?: UUIDString | null;
-  taskId?: UUIDString | null;
-  travelerId?: UUIDString | null;
+  id: string;
   text: string;
   type?: NoteType | null;
 }
@@ -1323,9 +1264,6 @@ import { connectorConfig, addNote, AddNoteVariables } from '@dataconnect/generat
 // The `AddNote` mutation requires an argument of type `AddNoteVariables`:
 const addNoteVars: AddNoteVariables = {
   id: ..., 
-  inspectionItemId: ..., // optional
-  taskId: ..., // optional
-  travelerId: ..., // optional
   text: ..., 
   type: ..., // optional
 };
@@ -1334,7 +1272,7 @@ const addNoteVars: AddNoteVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await addNote(addNoteVars);
 // Variables can be defined inline as well.
-const { data } = await addNote({ id: ..., inspectionItemId: ..., taskId: ..., travelerId: ..., text: ..., type: ..., });
+const { data } = await addNote({ id: ..., text: ..., type: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1358,9 +1296,6 @@ import { connectorConfig, addNoteRef, AddNoteVariables } from '@dataconnect/gene
 // The `AddNote` mutation requires an argument of type `AddNoteVariables`:
 const addNoteVars: AddNoteVariables = {
   id: ..., 
-  inspectionItemId: ..., // optional
-  taskId: ..., // optional
-  travelerId: ..., // optional
   text: ..., 
   type: ..., // optional
 };
@@ -1368,7 +1303,7 @@ const addNoteVars: AddNoteVariables = {
 // Call the `addNoteRef()` function to get a reference to the mutation.
 const ref = addNoteRef(addNoteVars);
 // Variables can be defined inline as well.
-const ref = addNoteRef({ id: ..., inspectionItemId: ..., taskId: ..., travelerId: ..., text: ..., type: ..., });
+const ref = addNoteRef({ id: ..., text: ..., type: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1421,7 +1356,7 @@ The `CreateTravelerTemplate` mutation requires an argument of type `CreateTravel
 
 ```typescript
 export interface CreateTravelerTemplateVariables {
-  id: UUIDString;
+  id: string;
   name?: string | null;
 }
 ```
@@ -1533,8 +1468,7 @@ The `CreateStation` mutation requires an argument of type `CreateStationVariable
 
 ```typescript
 export interface CreateStationVariables {
-  id: UUIDString;
-  taskTemplateId?: UUIDString | null;
+  id: string;
   name?: string | null;
   order?: number | null;
   doesReceiveTravelers?: boolean | null;
@@ -1558,7 +1492,6 @@ import { connectorConfig, createStation, CreateStationVariables } from '@datacon
 // The `CreateStation` mutation requires an argument of type `CreateStationVariables`:
 const createStationVars: CreateStationVariables = {
   id: ..., 
-  taskTemplateId: ..., // optional
   name: ..., // optional
   order: ..., // optional
   doesReceiveTravelers: ..., // optional
@@ -1568,7 +1501,7 @@ const createStationVars: CreateStationVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await createStation(createStationVars);
 // Variables can be defined inline as well.
-const { data } = await createStation({ id: ..., taskTemplateId: ..., name: ..., order: ..., doesReceiveTravelers: ..., });
+const { data } = await createStation({ id: ..., name: ..., order: ..., doesReceiveTravelers: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1592,7 +1525,6 @@ import { connectorConfig, createStationRef, CreateStationVariables } from '@data
 // The `CreateStation` mutation requires an argument of type `CreateStationVariables`:
 const createStationVars: CreateStationVariables = {
   id: ..., 
-  taskTemplateId: ..., // optional
   name: ..., // optional
   order: ..., // optional
   doesReceiveTravelers: ..., // optional
@@ -1601,7 +1533,7 @@ const createStationVars: CreateStationVariables = {
 // Call the `createStationRef()` function to get a reference to the mutation.
 const ref = createStationRef(createStationVars);
 // Variables can be defined inline as well.
-const ref = createStationRef({ id: ..., taskTemplateId: ..., name: ..., order: ..., doesReceiveTravelers: ..., });
+const ref = createStationRef({ id: ..., name: ..., order: ..., doesReceiveTravelers: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1654,9 +1586,9 @@ The `TravelerStation` mutation requires an argument of type `TravelerStationVari
 
 ```typescript
 export interface TravelerStationVariables {
-  id: UUIDString;
-  stationId: UUIDString;
-  travelerId: UUIDString;
+  id: string;
+  travelerId: string;
+  stationId: string;
   isCurrent?: boolean | null;
   leadInspectionProgress?: number | null;
   qamInspectionProgress?: number | null;
@@ -1681,8 +1613,8 @@ import { connectorConfig, travelerStation, TravelerStationVariables } from '@dat
 // The `TravelerStation` mutation requires an argument of type `TravelerStationVariables`:
 const travelerStationVars: TravelerStationVariables = {
   id: ..., 
-  stationId: ..., 
   travelerId: ..., 
+  stationId: ..., 
   isCurrent: ..., // optional
   leadInspectionProgress: ..., // optional
   qamInspectionProgress: ..., // optional
@@ -1693,7 +1625,7 @@ const travelerStationVars: TravelerStationVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await travelerStation(travelerStationVars);
 // Variables can be defined inline as well.
-const { data } = await travelerStation({ id: ..., stationId: ..., travelerId: ..., isCurrent: ..., leadInspectionProgress: ..., qamInspectionProgress: ..., taskProgress: ..., });
+const { data } = await travelerStation({ id: ..., travelerId: ..., stationId: ..., isCurrent: ..., leadInspectionProgress: ..., qamInspectionProgress: ..., taskProgress: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1717,8 +1649,8 @@ import { connectorConfig, travelerStationRef, TravelerStationVariables } from '@
 // The `TravelerStation` mutation requires an argument of type `TravelerStationVariables`:
 const travelerStationVars: TravelerStationVariables = {
   id: ..., 
-  stationId: ..., 
   travelerId: ..., 
+  stationId: ..., 
   isCurrent: ..., // optional
   leadInspectionProgress: ..., // optional
   qamInspectionProgress: ..., // optional
@@ -1728,7 +1660,7 @@ const travelerStationVars: TravelerStationVariables = {
 // Call the `travelerStationRef()` function to get a reference to the mutation.
 const ref = travelerStationRef(travelerStationVars);
 // Variables can be defined inline as well.
-const ref = travelerStationRef({ id: ..., stationId: ..., travelerId: ..., isCurrent: ..., leadInspectionProgress: ..., qamInspectionProgress: ..., taskProgress: ..., });
+const ref = travelerStationRef({ id: ..., travelerId: ..., stationId: ..., isCurrent: ..., leadInspectionProgress: ..., qamInspectionProgress: ..., taskProgress: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -1747,8 +1679,8 @@ executeMutation(ref).then((response) => {
 });
 ```
 
-## traveler
-You can execute the `traveler` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
+## Traveler
+You can execute the `Traveler` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect-generated/index.d.ts](./index.d.ts):
 ```typescript
 traveler(vars: TravelerVariables): MutationPromise<TravelerData, TravelerVariables>;
 
@@ -1777,20 +1709,20 @@ console.log(name);
 ```
 
 ### Variables
-The `traveler` mutation requires an argument of type `TravelerVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
+The `Traveler` mutation requires an argument of type `TravelerVariables`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 
 ```typescript
 export interface TravelerVariables {
-  id: UUIDString;
+  id: string;
   moduleProfileId?: string | null;
-  travelerTemplateId: UUIDString;
+  travelerTemplateId: string;
   isShipped?: boolean | null;
   notesRequiredUpload?: boolean | null;
   serialNumber?: string | null;
 }
 ```
 ### Return Type
-Recall that executing the `traveler` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+Recall that executing the `Traveler` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
 
 The `data` property is an object of type `TravelerData`, which is defined in [dataconnect-generated/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
@@ -1798,13 +1730,13 @@ export interface TravelerData {
   traveler_insert: Traveler_Key;
 }
 ```
-### Using `traveler`'s action shortcut function
+### Using `Traveler`'s action shortcut function
 
 ```typescript
 import { getDataConnect } from 'firebase/data-connect';
 import { connectorConfig, traveler, TravelerVariables } from '@dataconnect/generated';
 
-// The `traveler` mutation requires an argument of type `TravelerVariables`:
+// The `Traveler` mutation requires an argument of type `TravelerVariables`:
 const travelerVars: TravelerVariables = {
   id: ..., 
   moduleProfileId: ..., // optional
@@ -1833,13 +1765,13 @@ traveler(travelerVars).then((response) => {
 });
 ```
 
-### Using `traveler`'s `MutationRef` function
+### Using `Traveler`'s `MutationRef` function
 
 ```typescript
 import { getDataConnect, executeMutation } from 'firebase/data-connect';
 import { connectorConfig, travelerRef, TravelerVariables } from '@dataconnect/generated';
 
-// The `traveler` mutation requires an argument of type `TravelerVariables`:
+// The `Traveler` mutation requires an argument of type `TravelerVariables`:
 const travelerVars: TravelerVariables = {
   id: ..., 
   moduleProfileId: ..., // optional

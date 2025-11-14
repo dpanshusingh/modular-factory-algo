@@ -51,7 +51,6 @@ type ModuleCharacteristic @table {
 type TravelerTemplate @table {
   id: String!
   name: String
-  project: Project
 }
 
 type Traveler @table {
@@ -221,12 +220,13 @@ type WorkerTask @table {
   task: Task!
   startDate: Timestamp
   endDate: Timestamp
+  scheduledStartDate: Timestamp
+  scheduledEndDate: Timestamp
 }
 
 type TimeLog @table {
   id: String!
   worker: Worker!
-  workerTask: WorkerTask
   officialClockInDate: Timestamp
   officialClockOutDate: Timestamp
   actualClockInDate: Timestamp
@@ -260,21 +260,21 @@ type ManagedFile @table {
   storageDir: StorageDirectory
   uploadAttempts: Int
   createdAt: Timestamp!
-  task: Task
+  note: Note
 }
 
 # =====================
 # Short-named Mapping Tables
 # =====================
 
-type TravelerTemplateItemTemplate @table(name: "traveler_template_item_template") {
+type TravelerTemplateInspectionItemTemplate @table(name: "traveler_template_inspection_item_template") {
   id: String!
-  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_tt_it_trv")
-  inspectionItemTemplate: InspectionItemTemplate! @ref(constraintName: "fk_tt_it_tmp")
+  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_ttiit_trv")
+  inspectionItemTemplate: InspectionItemTemplate! @ref(constraintName: "fk_ttiit_tmp")
 }
 
-type TravelerTemplateTaskMap @table(name: "traveler_template_task_map") {
+type TravelerTemplateTaskTemplate @table(name: "traveler_template_task_template") {
   id: String!
-  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_tt_t_map_trv")
-  taskTemplate: TaskTemplate! @ref(constraintName: "fk_tt_t_map_tmp")
+  travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_ttt_trv")
+  taskTemplate: TaskTemplate! @ref(constraintName: "fk_ttt_tmp")
 }

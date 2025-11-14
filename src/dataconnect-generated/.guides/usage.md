@@ -14,29 +14,11 @@ If a user is not using a supported framework, they can use the generated SDK dir
 Here's an example of how to use it with the first 5 operations:
 
 ```js
-import { addNote, createTravelerTemplate, createStation, travelerStation, traveler, getNotes, getNotesByTraveler, getTravelerTemplates, getStations, getStationById } from '@dataconnect/generated';
+import { getNotes, getTravelerTemplates, getStations, getStationById, getTravelers, getTravelerById, getTravelerStations, getTravelerStationsByTraveler, getWorkers, getWorkerTasks } from '@dataconnect/generated';
 
-
-// Operation AddNote:  For variables, look at type AddNoteVars in ../index.d.ts
-const { data } = await AddNote(dataConnect, addNoteVars);
-
-// Operation CreateTravelerTemplate:  For variables, look at type CreateTravelerTemplateVars in ../index.d.ts
-const { data } = await CreateTravelerTemplate(dataConnect, createTravelerTemplateVars);
-
-// Operation CreateStation:  For variables, look at type CreateStationVars in ../index.d.ts
-const { data } = await CreateStation(dataConnect, createStationVars);
-
-// Operation TravelerStation:  For variables, look at type TravelerStationVars in ../index.d.ts
-const { data } = await TravelerStation(dataConnect, travelerStationVars);
-
-// Operation traveler:  For variables, look at type TravelerVars in ../index.d.ts
-const { data } = await Traveler(dataConnect, travelerVars);
 
 // Operation GetNotes: 
 const { data } = await GetNotes(dataConnect);
-
-// Operation GetNotesByTraveler:  For variables, look at type GetNotesByTravelerVars in ../index.d.ts
-const { data } = await GetNotesByTraveler(dataConnect, getNotesByTravelerVars);
 
 // Operation GetTravelerTemplates: 
 const { data } = await GetTravelerTemplates(dataConnect);
@@ -46,6 +28,24 @@ const { data } = await GetStations(dataConnect);
 
 // Operation GetStationById:  For variables, look at type GetStationByIdVars in ../index.d.ts
 const { data } = await GetStationById(dataConnect, getStationByIdVars);
+
+// Operation GetTravelers: 
+const { data } = await GetTravelers(dataConnect);
+
+// Operation GetTravelerById:  For variables, look at type GetTravelerByIdVars in ../index.d.ts
+const { data } = await GetTravelerById(dataConnect, getTravelerByIdVars);
+
+// Operation GetTravelerStations: 
+const { data } = await GetTravelerStations(dataConnect);
+
+// Operation GetTravelerStationsByTraveler:  For variables, look at type GetTravelerStationsByTravelerVars in ../index.d.ts
+const { data } = await GetTravelerStationsByTraveler(dataConnect, getTravelerStationsByTravelerVars);
+
+// Operation GetWorkers: 
+const { data } = await GetWorkers(dataConnect);
+
+// Operation GetWorkerTasks: 
+const { data } = await GetWorkerTasks(dataConnect);
 
 
 ```

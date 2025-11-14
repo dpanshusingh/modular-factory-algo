@@ -11,9 +11,12 @@ import { projectRoutes } from "./routes/project.route";
 import { moduleCharacteristicsRoutes } from "./routes/moduleCharacteristic.route";
 import { moduleProfileRoutes } from "./routes/moduleProfile.route";
 import { inspectionAreaRoutes } from "./routes/inspectionArea.route";
-import {stationRoutes } from "./routes/station.routes";
+import { stationRoutes } from "./routes/station.routes";
 import { taskTemplateRoutes } from "./routes/taskTemplate.route";
-
+import { travelerTemplateRoutes } from "./routes/travelerTemplate.route";
+import { inspectionItemTemplateRoutes } from "./routes/inspectionItemTemplate.route";
+import { travelerTemplateTaskTemplateRoutes } from "./routes/travelTemplateTaskTemplate.route";
+import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerTemplateInspectionItemTemplate.route";
 
 const app = express();
 
@@ -40,12 +43,22 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/api/users", userRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/timelogs", timelogRoutes);
-app.use("/api/projects",projectRoutes);
-app.use("/api/moduleCharacteristics",moduleCharacteristicsRoutes)
-app.use("/api/moduleProfiles", moduleProfileRoutes)
-app.use("/api/inspectionArea", inspectionAreaRoutes)
-app.use("/api/station", stationRoutes)
-app.use("/api/taskTemplate", taskTemplateRoutes)
+app.use("/api/projects", projectRoutes);
+app.use("/api/moduleCharacteristics", moduleCharacteristicsRoutes);
+app.use("/api/moduleProfiles", moduleProfileRoutes);
+app.use("/api/inspectionArea", inspectionAreaRoutes);
+app.use("/api/station", stationRoutes);
+app.use("/api/taskTemplate", taskTemplateRoutes);
+app.use("/api/travelerTemplate", travelerTemplateRoutes);
+app.use("/api/inspectionItemTemplate", inspectionItemTemplateRoutes);
+app.use(
+  "/api/travelerTemplateTaskTemplate",
+  travelerTemplateTaskTemplateRoutes
+);
+app.use(
+  "/api/travelerTemplateInspectionItemTemplate",
+  travelerTemplateInspectionItemTemplateRoutes
+);
 
 app.use(errorMiddleware);
 
