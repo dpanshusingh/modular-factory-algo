@@ -1,13 +1,25 @@
 specVersion: "v1"
+
+# Unique service name for Firebase Data Connect
 serviceId: "vos-web-1"
+
+# Region for deployment
 location: "us-central1"
+
+# Path to your GraphQL schema
 schema:
   source: "./schema"
+
+  # PostgreSQL Data Source Configuration
   datasource:
     postgresql:
       database: "vederra-7c271-2-database"
       cloudSql:
         instanceId: "vedeera-cloud12345"
-        # schemaValidation: "STRICT"     # STRICT mode makes Postgres schema match Data Connect exactly.
-        # schemaValidation: "COMPATIBLE" # COMPATIBLE mode makes Postgres schema compatible with Data Connect.
-connectorDirs: ["./example"]
+      # Validation mode — use STRICT after all schema errors are fixed
+      schemaValidation: "COMPATIBLE"
+
+# Path to connector definitions (queries, mutations, subscriptions)
+connectorDirs:
+  - "./example"
+

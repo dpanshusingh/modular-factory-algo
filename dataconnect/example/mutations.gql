@@ -1,100 +1,49 @@
-# ------------------------
-# Mutations (fixed & deployable)
-# ------------------------
-
-mutation AddNote(
-  $id: UUID!
-  $inspectionItemId: UUID
-  $taskId: UUID
-  $travelerId: UUID
-  $text: String!
-  $type: NoteType
-) @auth(level: PUBLIC) {
-  note_insert(data: {
-    id: $id
-    inspectionItemId: $inspectionItemId
-    taskId: $taskId
-    travelerId: $travelerId
-    text: $text
-    type: $type
-  })
+mutation AddNote($id: String!, $text: String!, $type: NoteType) @auth(level: PUBLIC) {
+  note_insert(data: { id: $id, text: $text, type: $type }) 
 }
 
-mutation CreateTravelerTemplate(
-  $id: UUID!
-  $name: String
-) @auth(level: PUBLIC) {
-  travelerTemplate_insert(data: {
-    id: $id
-    name: $name
-  })
+mutation CreateTravelerTemplate($id: String!, $name: String) @auth(level: PUBLIC) {
+  travelerTemplate_insert(data: { id: $id, name: $name })
 }
 
-mutation CreateStation(
-  $id: UUID!
-  $taskTemplateId: UUID
-  $name: String
-  $order: Int
-  $doesReceiveTravelers: Boolean
-) @auth(level: PUBLIC) {
-  station_insert(data: {
-    id: $id
-    taskTemplateId: $taskTemplateId
-    name: $name
-    order: $order
-    doesReceiveTravelers: $doesReceiveTravelers
-  })
+mutation CreateStation($id: String!, $name: String, $order: Int, $doesReceiveTravelers: Boolean) @auth(level: PUBLIC) {
+  station_insert(data: { id: $id, name: $name, order: $order, doesReceiveTravelers: $doesReceiveTravelers })
 }
 
-mutation CreateProject($name: String!) @auth(level: PUBLIC) {
-  project_insert(data: { name: $name })
-}
-
-mutation UpdateProject($id: UUID!, $name: String!) @auth(level: PUBLIC) {
-  project_update(data: { id: $id, name: $name })
-}
-
-# ❗ FIXED: project_delete uses `key:` instead of `data:`
-mutation DeleteProject($id: UUID!) @auth(level: PUBLIC) {
-  project_delete(key: { id: $id })
-}
-
-# ❗ FIXED: Correct name → travelerStation_insert (camelCase)
-mutation CreateTravelerStation(
-  $id: UUID!
-  $stationId: UUID!
-  $travelerId: UUID!
-  $isCurrent: Boolean
-  $leadInspectionProgress: Float
-  $qamInspectionProgress: Float
+mutation TravelerStation(
+  $id: String!,
+  $travelerId: String!, 
+  $stationId: String!, 
+  $isCurrent: Boolean, 
+  $leadInspectionProgress: Float, 
+  $qamInspectionProgress: Float, 
   $taskProgress: Float
 ) @auth(level: PUBLIC) {
   travelerStation_insert(data: {
-    id: $id
-    stationId: $stationId
-    travelerId: $travelerId
-    isCurrent: $isCurrent
-    leadInspectionProgress: $leadInspectionProgress
-    qamInspectionProgress: $qamInspectionProgress
+    id: $id,
+    travelerId: $travelerId, 
+    stationId: $stationId, 
+    isCurrent: $isCurrent, 
+    leadInspectionProgress: $leadInspectionProgress, 
+    qamInspectionProgress: $qamInspectionProgress, 
     taskProgress: $taskProgress
   })
 }
 
-# ❗ FIXED: $id type → UUID (not ID)
-mutation CreateTraveler(
-  $id: UUID!
-  $moduleProfileId: String
-  $travelerTemplateId: UUID!
-  $isShipped: Boolean
-  $notesRequiredUpload: Boolean
+mutation Traveler(
+  $id: String!, 
+  $moduleProfileId: String, 
+  $travelerTemplateId: String!, 
+  $isShipped: Boolean, 
+  $notesRequiredUpload: Boolean, 
   $serialNumber: String
 ) @auth(level: PUBLIC) {
   traveler_insert(data: {
-    id: $id
-    moduleProfileId: $moduleProfileId
-    travelerTemplateId: $travelerTemplateId
-    isShipped: $isShipped
-    notesRequiredUpload: $notesRequiredUpload
+    id: $id, 
+    moduleProfileId: $moduleProfileId, 
+    travelerTemplateId: $travelerTemplateId, 
+    isShipped: $isShipped, 
+    notesRequiredUpload: $notesRequiredUpload, 
     serialNumber: $serialNumber
   })
 }

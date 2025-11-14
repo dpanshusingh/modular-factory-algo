@@ -60,7 +60,8 @@ export interface CreateProjectRequest {
   name?: string;
 }
 export interface CreateModuleProfileRequest {
-  projectId: number;
+  project_Id: string;
+  id: string;
   name?: string;
 }
 

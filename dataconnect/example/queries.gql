@@ -1,27 +1,19 @@
+# =====================
 # Notes
+# =====================
+
 query GetNotes @auth(level: PUBLIC) {
   notes {
     id
-    inspectionItemId
-    taskId
-    travelerId
     text
     type
   }
 }
 
-query GetNotesByTraveler($travelerId: UUID!) @auth(level: PUBLIC) {
-  notes(where: { travelerId: { eq: $travelerId } }) {
-    id
-    inspectionItemId
-    taskId
-    travelerId
-    text
-    type
-  }
-}
-
+# =====================
 # Traveler Templates
+# =====================
+
 query GetTravelerTemplates @auth(level: PUBLIC) {
   travelerTemplates {
     id
@@ -29,38 +21,44 @@ query GetTravelerTemplates @auth(level: PUBLIC) {
   }
 }
 
+# =====================
 # Stations
+# =====================
+
 query GetStations @auth(level: PUBLIC) {
   stations {
     id
-    taskTemplateId
     name
     order
     doesReceiveTravelers
   }
 }
 
-query GetStationById($id: UUID!) @auth(level: PUBLIC) {
+query GetStationById($id: String!) @auth(level: PUBLIC) {
   station(id: $id) {
     id
-    taskTemplateId
     name
     order
     doesReceiveTravelers
   }
 }
 
+# =====================
 # Travelers
-query GetTraveler @auth(level: PUBLIC) {
+# =====================
+
+query GetTravelers @auth(level: PUBLIC) {
   travelers {
     id
+    moduleProfileId
+    travelerTemplateId
     isShipped
     notesRequiredUpload
     serialNumber
   }
 }
 
-query GetTravelerById($id: UUID!) @auth(level: PUBLIC) {
+query GetTravelerById($id: String!) @auth(level: PUBLIC) {
   traveler(id: $id) {
     id
     moduleProfileId
@@ -71,12 +69,15 @@ query GetTravelerById($id: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-# Traveler Stations
+# =====================
+# Traveler <-> Station Links
+# =====================
+
 query GetTravelerStations @auth(level: PUBLIC) {
   travelerStations {
     id
-    stationId
     travelerId
+    stationId
     leadInspectionProgress
     qamInspectionProgress
     taskProgress
@@ -84,11 +85,11 @@ query GetTravelerStations @auth(level: PUBLIC) {
   }
 }
 
-query GetTravelerStationsByTraveler($travelerId: UUID!) @auth(level: PUBLIC) {
+query GetTravelerStationsByTraveler($travelerId: String!) @auth(level: PUBLIC) {
   travelerStations(where: { travelerId: { eq: $travelerId } }) {
     id
-    stationId
     travelerId
+    stationId
     leadInspectionProgress
     qamInspectionProgress
     taskProgress
@@ -96,37 +97,37 @@ query GetTravelerStationsByTraveler($travelerId: UUID!) @auth(level: PUBLIC) {
   }
 }
 
-query GetCurrentTravelerStations($travelerId: UUID!) @auth(level: PUBLIC) {
-  travelerStations(where: { travelerId: { eq: $travelerId }, isCurrent: { eq: true } }) {
+# =====================
+# Worker & Tasks (Optional)
+# =====================
+
+query GetWorkers @auth(level: PUBLIC) {
+  workers {
     id
-    stationId
+    firstName
+    lastName
+    role
+    employeeId
+  }
+}
+
+query GetWorkerTasks @auth(level: PUBLIC) {
+  workerTasks {
+    id
+    workerId
+    taskId
+    startDate
+    endDate
+  }
+}
+
+query GetTasks @auth(level: PUBLIC) {
+  tasks {
+    id
     travelerId
-    leadInspectionProgress
-    qamInspectionProgress
-    taskProgress
-    isCurrent
-  }
-}
-
-query GetTravelerStationsQamProgress($stationId: UUID!) @auth(level: PUBLIC) {
-  travelerStations(where: { stationId: { eq: $stationId } }) {
-    id
-    qamInspectionProgress
-  }
-}
-
-# Projects
-query GetAllProjects @auth(level: PUBLIC) {
-  projects {
-    id
-    name
-  }
-}
-
-# ✅ FIXED VERSION
-query GetProjectById($id: UUID!) @auth(level: PUBLIC) {
-  project(id: $id) {
-    id
-    name
+    taskTemplateId
+    leadStatus
+    qamStatus
+    createdAt
   }
 }
