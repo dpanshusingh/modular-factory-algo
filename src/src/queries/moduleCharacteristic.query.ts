@@ -1,13 +1,48 @@
 import { dataConnect } from "../config/dataConnectClient";
 
-export const CREATE_MODULE_CHARACTERISTIC = `
-  mutation CreateModuleCharacteristic(
+type Float = number & { __int__: void };
+
+function toFloat(n: number): Float {
+  if (!Number.isInteger(n)) {
+    throw new Error("Value is not an integer");
+  }
+  return n as Float;
+}
+
+export enum ModuleCharacteristicType {
+  squareFeet = "squareFeet",
+  linearFeetExteriorWalls = "linearFeetExteriorWalls",
+  linearFeetInteriorWalls = "linearFeetInteriorWalls",
+  countInteriorWalls = "countInteriorWalls",
+  countToilets = "countToilets",
+  countSinks = "countSinks",
+  countWindows = "countWindows",
+  countExteriorDoors = "countExteriorDoors",
+  countInteriorDoors = "countInteriorDoors",
+  squareFeetExteriorCloseUp = "squareFeetExteriorCloseUp",
+  squareFeetRoofing = "squareFeetRoofing",
+  linearFeetCabinets = "linearFeetCabinets",
+  countElectricalTerminals = "countElectricalTerminals",
+  linearFeetFirewall = "linearFeetFirewall",
+  countStairs = "countStairs",
+  hasHvacDucting = "hasHvacDucting",
+}
+export interface ModuleCharacteristicInput {
+  id: string;
+  moduleProfileId: string;
+  characteristicType: ModuleCharacteristicType;
+  value: number;
+}
+
+export const createModuleCharacterstics = async (
+  input: ModuleCharacteristicInput
+) => {
+  const query = `mutation CreateModuleCharacteristic(  
     $id: String!,
     $moduleProfileId: String!,
-    $characteristicType: ModuleCharacteristicType,
-    $value: Float
-  ) {
-    moduleCharacteristic_insert(
+    $characteristicType: ModuleCharacteristicType!,
+    $value: Float!){
+ moduleCharacteristic_insert(
       data: {
         id: $id
         moduleProfileId: $moduleProfileId
@@ -15,8 +50,14 @@ export const CREATE_MODULE_CHARACTERISTIC = `
         value: $value
       }
     )
-  }
-`;
+    }`;
+
+  const response = await dataConnect.executeGraphql(query, {
+    variables: input,
+  });
+
+  return response.data;
+};
 
 export const CREATE_MODULE_CHARACTERISTIC_MANY = `
   mutation CreateManyModuleCharacteristics(
@@ -36,6 +77,21 @@ export const GET_ALL_MODULE_CHARACTERISTICS = `
     }
   }
 `;
+
+export const getAllModuleChracterstics = async () => {
+  const query = `
+  query GetModuleCharacteristics {
+    moduleCharacteristics {
+      id
+      moduleProfileId
+      characteristicType
+      value
+    }
+  }
+`;
+  const response = await dataConnect.executeGraphql(query, {});
+  return response.data ?? [];
+};
 
 export const GET_MODULE_CHARACTERISTICS_BY_ID = async (
   moduleProfileId: string

@@ -10,7 +10,6 @@ function toInt(n: number): Int {
 }
 
 export interface InspectionAreaInput {
-    id: string;
     name: string;
     order: Int;
 }

@@ -17,6 +17,8 @@ import { travelerTemplateRoutes } from "./routes/travelerTemplate.route";
 import { inspectionItemTemplateRoutes } from "./routes/inspectionItemTemplate.route";
 import { travelerTemplateTaskTemplateRoutes } from "./routes/travelTemplateTaskTemplate.route";
 import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerTemplateInspectionItemTemplate.route";
+import { PtoManagementRoutes } from "./routes/ptoManagement.route";
+import { moduleRouter } from "./routes/module.routes";
 
 const app = express();
 
@@ -27,9 +29,14 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/public", express.static("public"));
+
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      "https://vos-dev.vederra.com",
+      "https://vos.vederra.com",
+      "http://localhost:3000", // optional if you want local dev too
+    ],
     credentials: true,
   })
 );
@@ -59,6 +66,9 @@ app.use(
   "/api/travelerTemplateInspectionItemTemplate",
   travelerTemplateInspectionItemTemplateRoutes
 );
+app.use("/api/ptoManagement", PtoManagementRoutes);
+
+app.use("/api/module", moduleRouter);
 
 app.use(errorMiddleware);
 
