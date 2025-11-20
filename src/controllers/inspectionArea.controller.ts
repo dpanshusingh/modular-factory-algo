@@ -16,7 +16,7 @@ export const createInspectionAreaController = async (
     const { name, order } = req.body;
     const id = uuidv4();
 
-    const inspectionArea = await createInspectionArea({ id, name, order });
+    const inspectionArea = await createInspectionArea({id, name, order });
 
     res.status(201).json({
       success: true,

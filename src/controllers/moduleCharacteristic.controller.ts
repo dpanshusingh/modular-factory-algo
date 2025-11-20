@@ -1,15 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import { dataConnect } from "../config/dataConnectClient";
 import {
-  CREATE_MODULE_CHARACTERISTIC,
+  createModuleCharacterstics,
   DELETE_MODULE_CHARACTERISTIC,
   DELETE_MODULE_CHARACTERISTICS_BY_ID,
-  GET_ALL_MODULE_CHARACTERISTICS,
+  getAllModuleChracterstics,
   GET_MODULE_CHARACTERISTICS_BY_ID,
+  ModuleCharacteristicType,
   UPDATE_MODULE_CHARACTERISTIC,
 } from "../queries/moduleCharacteristic.query";
 import { v4 as uuidv4 } from "uuid";
 import { ApiResponse } from "../types/@server";
+import { string } from "yup";
+
+interface moduleCharacteristicData {
+  moduleProfileId: string;
+  characteristicType: ModuleCharacteristicType;
+  value: number;
+}
 
 export const createModuleCharacteristic = async (
   req: Request,
@@ -17,8 +25,8 @@ export const createModuleCharacteristic = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const { moduleProfileId, characteristicType, value } = req.body;
-
+    const { moduleProfileId, characteristicType, value } =
+      req.body as moduleCharacteristicData;
     if (!moduleProfileId) {
       return res.status(400).json({
         success: false,
@@ -26,29 +34,28 @@ export const createModuleCharacteristic = async (
       });
     }
 
-    const id = crypto.randomUUID();
+    const id = uuidv4();
 
-    const result = await dataConnect.executeGraphql(
-      CREATE_MODULE_CHARACTERISTIC,
-      {
-        variables: {
-          id,
-          moduleProfileId,
-          characteristicType: characteristicType || null,
-          value: value ? parseFloat(value) : null,
-        },
-      }
-    );
+    const moduleCharacteristic = await createModuleCharacterstics({
+      id,
+      moduleProfileId,
+      characteristicType,
+      value,
+    });
 
     const response: ApiResponse = {
       success: true,
-      message: "Created characteristic successfully",
-      data: result.data,
+      message: "Created module characteristic successfully",
+      data: moduleCharacteristic,
     };
 
     res.status(201).json(response.data);
   } catch (error) {
-    next(error);
+    console.error("Create module characteristic error:", error);
+    const response: ApiResponse = {
+      success: false,
+      message: `Create module characteristic error:${error}`,
+    };
   }
 };
 
@@ -114,9 +121,7 @@ export const getAllModuleCharacteristics = async (
   next: NextFunction
 ): Promise<any> => {
   try {
-    const result = await dataConnect.executeGraphql(
-      GET_ALL_MODULE_CHARACTERISTICS
-    );
+    const result = await getAllModuleChracterstics();
     const response: ApiResponse = {
       success: true,
       message: "Get characteristics successfully",
@@ -125,7 +130,11 @@ export const getAllModuleCharacteristics = async (
 
     res.status(201).json(response.data);
   } catch (error) {
-    next(error);
+    const response: ApiResponse = {
+      success: false,
+      message: `Error Get characteristics:${error}`,
+    };
+    res.status(200).json(response);
   }
 };
 
@@ -141,6 +150,7 @@ export const getModuleCharacteristicsByIdController = async (
     res.status(500).json({ error: error.message });
   }
 };
+
 
 export const updateModuleCharacteristic = async (
   req: Request,

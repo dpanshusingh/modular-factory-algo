@@ -48,6 +48,23 @@ export interface CreateEmployeeRequest {
   crews: string[];
 }
 
+export enum PTOstatus {
+  Pending,
+  Approved,
+  Rejected,
+}
+
+export interface CreatePtoRequest {
+  employeeId: string;
+  employeeName: string;
+  ptoType: string;
+  ptoStatus: PTOstatus;
+  ptoHours: number;
+  ptoNotes: string;
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface CreateTimelogRequest {
   employeeId: number;
   startTime: string;

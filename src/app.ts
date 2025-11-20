@@ -17,7 +17,8 @@ import { travelerTemplateRoutes } from "./routes/travelerTemplate.route";
 import { inspectionItemTemplateRoutes } from "./routes/inspectionItemTemplate.route";
 import { travelerTemplateTaskTemplateRoutes } from "./routes/travelTemplateTaskTemplate.route";
 import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerTemplateInspectionItemTemplate.route";
-
+import { PtoManagementRoutes } from "./routes/ptoManagement.route";
+import { moduleRouter } from "./routes/module.routes";
 const app = express();
 
 // Apply general rate limiting
@@ -29,7 +30,11 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/public", express.static("public"));
 app.use(
   cors({
-    origin: "*",
+    origin: [
+      ENV.ORIGIN_DEV,
+      ENV.ORIGIN_PROD,
+      ENV.ORIGIN_LOCAL, // optional if you want local dev too
+    ],
     credentials: true,
   })
 );
@@ -59,6 +64,9 @@ app.use(
   "/api/travelerTemplateInspectionItemTemplate",
   travelerTemplateInspectionItemTemplateRoutes
 );
+app.use("/api/ptoManagement", PtoManagementRoutes);
+
+app.use("/api/module", moduleRouter);
 
 app.use(errorMiddleware);
 
