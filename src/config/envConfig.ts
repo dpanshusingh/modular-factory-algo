@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config();
-
+dotenv.config({ path: [".env.local", ".env"] });
 
 // Required environment variables
 if (!process.env.PORT) throw new Error("PORT is not defined");
@@ -8,24 +7,36 @@ if (!process.env.CORS_ORIGIN) throw new Error("CORS_ORIGIN is not defined");
 
 if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not defined");
 // Firebase environment variables (required for authentication)
-if (!process.env.FIREBASE_PROJECT_ID) throw new Error("FIREBASE_PROJECT_ID is not defined");
-if (!process.env.FIREBASE_PRIVATE_KEY) throw new Error("FIREBASE_PRIVATE_KEY is not defined");
-if (!process.env.FIREBASE_CLIENT_EMAIL) throw new Error("FIREBASE_CLIENT_EMAIL is not defined");
-if (!process.env.DATA_CONNECT_LOCATION) throw new Error("FIREBASE_REGION is not defined");
-if (!process.env.DATA_CONNECT_CONNECTION_ID) throw new Error("DATA_CONNECT_CONNECTION_ID is not defined");
+if (!process.env.FIREBASE_PROJECT_ID)
+  throw new Error("FIREBASE_PROJECT_ID is not defined");
 
+if (!process.env.ORIGIN_DEV) throw new Error("ORIGIN_DEV is not defined");
+if (!process.env.ORIGIN_PROD) throw new Error("ORIGIN_PROD is not defined");
+if (!process.env.ORIGIN_LOCAL) throw new Error("ORIGIN_LOCAL is not defined");
+
+if (!process.env.FIREBASE_PRIVATE_KEY)
+  throw new Error("FIREBASE_PRIVATE_KEY is not defined");
+if (!process.env.FIREBASE_CLIENT_EMAIL)
+  throw new Error("FIREBASE_CLIENT_EMAIL is not defined");
+if (!process.env.DATA_CONNECT_LOCATION)
+  throw new Error("FIREBASE_REGION is not defined");
+if (!process.env.DATA_CONNECT_CONNECTION_ID)
+  throw new Error("DATA_CONNECT_CONNECTION_ID is not defined");
 
 export const ENV = {
-    // Server configuration
-    PORT: process.env.PORT,
-    CORS_ORIGIN: process.env.CORS_ORIGIN,
-    NODE_ENV: process.env.NODE_ENV || 'development',
+  // Server configuration
+  PORT: process.env.PORT,
+  CORS_ORIGIN: process.env.CORS_ORIGIN,
+  ORIGIN_DEV: process.env.ORIGIN_DEV,
+  ORIGIN_PROD: process.env.ORIGIN_PROD,
+  ORIGIN_LOCAL: process.env.ORIGIN_LOCAL,
+  NODE_ENV: process.env.NODE_ENV || "development",
 
-    // Database configuration
-    DATABASE_URL: process.env.DATABASE_URL,
+  // Database configuration
+  DATABASE_URL: process.env.DATABASE_URL,
 
-    // Firebase Admin SDK configuration
-    FIREBASE: {
+  // Firebase Admin SDK configuration
+  FIREBASE: {
     type: "service_account",
     project_id: process.env.FIREBASE_PROJECT_ID,
     private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
@@ -44,4 +55,4 @@ export const ENV = {
     region: process.env.FIREBASE_REGION,
     connectionId: process.env.FIREBASE_DATACONNECT_CONNECTION_ID,
   },
-}; 
+};

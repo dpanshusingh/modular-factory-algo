@@ -19,20 +19,3 @@ export const validateRequest = (schema: AnyObjectSchema) => async (
     });
   }
 };
-
-
-// export const validateRequest = (schema: AnyObjectSchema) => async (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   try {
-//     await schema.validate(req.body, { abortEarly: false });
-//     next();
-//   } catch (err: any) {
-//     return res.status(400).json({
-//       success: false,
-//       errors: err.errors,
-//     });
-//   }
-// };

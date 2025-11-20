@@ -36,9 +36,14 @@ export const createModuleController = async (req: Request, res: Response) => {
       message: "module created successfully",
       data: module,
     });
-  } catch (error: any) {
-    console.error("Create module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Create module error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    } else {
+      console.error("Create module error:", error);
+      res.status(500).json({ success: false, error: "Unknown error occurred" });
+    }
   }
 };
 
@@ -50,9 +55,14 @@ export const getAllModuleController = async (req: Request, res: Response) => {
       success: true,
       data: module,
     });
-  } catch (error: any) {
-    console.error("Get module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Get module error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    } else {
+      console.error("Get module error:", error);
+      res.status(500).json({ success: false, error: "Unknown error occurred" });
+    }
   }
 };
 
@@ -71,9 +81,14 @@ export const getByIdModuleController = async (req: Request, res: Response) => {
       message: "module fetched successfully",
       data: data,
     });
-  } catch (error: any) {
-    console.error("get by Id module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Get By Id module error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    } else {
+      console.error("Get By Id module error:", error);
+      res.status(500).json({ success: false, error: "Unknown error occurred" });
+    }
   }
 };
 
@@ -99,9 +114,14 @@ export const updateModuleController = async (req: Request, res: Response) => {
       message: "Successfully updated the Module",
       data: updatedModule,
     });
-  } catch (error: any) {
-    console.error("Update module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("update module error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    } else {
+      console.error("update module error:", error);
+      res.status(500).json({ success: false, error: "Unknown error occurred" });
+    }
   }
 };
 
@@ -120,8 +140,13 @@ export const deleteModuleeaController = async (req: Request, res: Response) => {
       success: true,
       message: "module deleted successfully",
     });
-  } catch (error: any) {
-    console.error("delete module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("delete module error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    } else {
+      console.error("delete module error:", error);
+      res.status(500).json({ success: false, error: "Unknown error occurred" });
+    }
   }
 };
