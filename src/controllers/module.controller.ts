@@ -13,13 +13,8 @@ import { randomBytes } from "crypto";
 // Create module
 export const createModuleController = async (req: Request, res: Response) => {
   try {
-    const { moduleProfileId, travelerId, travelerTemplateId } = req.body;
+    const { moduleProfileId, travelerId, travelerTemplateId,serialNumber} = req.body;
     const id = uuidv4();
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const randomNumber = Math.floor(Math.random() * 999) + 1;
-    const serialNumber = `${year}+${month}+${randomNumber}`;
     const orderCount = await getAllModuleCount();
     const order = orderCount + 1;
     const module = await createModule({
