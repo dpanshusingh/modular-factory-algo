@@ -44,21 +44,20 @@ export type ModuleCharacteristicType =
   | "hasHvacDucting";
 
 export type Skill =
-| "framing"
-| "finishCarpentry"
-| "electricalTrim"
-| "electricalRough"
-| "plumbing"
-| "drywallHanging"
-| "drywallMud"
-| "texture"
-| "painting"
-| "roofing"
-| "flooring"
-| "boxMoving"
-| "cutting"
-| "hvac" ;
-
+  | "framing"
+  | "finishCarpentry"
+  | "electricalTrim"
+  | "electricalRough"
+  | "plumbing"
+  | "drywallHanging"
+  | "drywallMud"
+  | "texture"
+  | "painting"
+  | "roofing"
+  | "flooring"
+  | "boxMoving"
+  | "cutting"
+  | "hvac";
 
 export interface TaskTemplateInput {
   id: string;
@@ -80,7 +79,7 @@ export const createTaskTemplate = async (input: TaskTemplateInput) => {
       $id: String!
       $isPhotoRequired: Boolean!
       $isVideoRequired: Boolean!
-      $leadType: LeadType!
+      $departmentId: String!
       $maxWorkers: Int!
       $minWorkers: Int!
       $moduleCharacteristicType: ModuleCharacteristicType!
@@ -88,13 +87,15 @@ export const createTaskTemplate = async (input: TaskTemplateInput) => {
       $order: Int!
       $rankedSkills: [Skill!]
       $stationId: String!
+      $description:String
+      $prerequisiteTaskTemplateId:String
     ) {
       taskTemplate_insert(
         data: {
           id: $id
           isPhotoRequired: $isPhotoRequired
           isVideoRequired: $isVideoRequired
-          leadType: $leadType
+          departmentId: $departmentId
           maxWorkers: $maxWorkers
           minWorkers: $minWorkers
           moduleCharacteristicType: $moduleCharacteristicType
@@ -102,6 +103,8 @@ export const createTaskTemplate = async (input: TaskTemplateInput) => {
           order: $order
           rankedSkills: $rankedSkills
           station: { id: $stationId }
+          description:$description
+          prerequisiteTaskTemplateId:$prerequisiteTaskTemplateId
         }
       )
     }
@@ -174,17 +177,17 @@ export const getTaskTemplateById = async (id: string) => {
   return response.data;
 };
 
-// Update 
+// Update
 export const updateTaskTemplate = async (
   id: string,
   input: Partial<TaskTemplateInput>
 ) => {
-const query = `
+  const query = `
 mutation UpdateTaskTemplate(
       $id: String!
       $isPhotoRequired: Boolean!
       $isVideoRequired: Boolean!
-      $leadType: LeadType!
+      $departmentId: String!
       $maxWorkers: Int!
       $minWorkers: Int!
       $moduleCharacteristicType: ModuleCharacteristicType!
@@ -192,13 +195,16 @@ mutation UpdateTaskTemplate(
       $order: Int!
       $rankedSkills: [Skill!]
       $stationId: String!
+      $description:String
+          $prerequisiteTaskTemplateId:String
+       
 ) {
     taskTemplate_update(
         id: $id
         data: {
           isPhotoRequired: $isPhotoRequired
           isVideoRequired: $isVideoRequired
-          leadType: $leadType
+          departmentId: $departmentId
           maxWorkers: $maxWorkers
           minWorkers: $minWorkers
           moduleCharacteristicType: $moduleCharacteristicType
@@ -206,11 +212,12 @@ mutation UpdateTaskTemplate(
           order: $order
           rankedSkills: $rankedSkills
           station: { id: $stationId }
+           description:$description
+        prerequisiteTaskTemplateId:$prerequisiteTaskTemplateId
         }
     )
 }
 `;
-
 
   const response = await dataConnect.executeGraphql(query, {
     variables: { id, ...input },
