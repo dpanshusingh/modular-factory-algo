@@ -10,22 +10,24 @@ function toInt(n: number): Int {
 }
 
 export interface StationInput {
-    id: string;
-    doesReceiveTravelers: Boolean;
-    name: string;
-    order: Int;
-    inspectionAreaId: string;
+  id: string;
+  doesReceiveTravelers: Boolean;
+  canReceiveMultipleTravelers: Boolean;
+  name: string;
+  order: number;
+  inspectionAreaId: string;
 }
 
 // Create
 export const createStation = async (input: StationInput & { id: string }) => {
   const query = `
-    mutation CreateStation($id: String!, $name: String!, $doesReceiveTravelers: Boolean!, $order: Int!, $inspectionAreaId: String!) {
+    mutation CreateStation($id: String!, $name: String!, $doesReceiveTravelers: Boolean!,$canReceiveMultipleTravelers:Boolean!, $order: Int!, $inspectionAreaId: String!) {
       station_insert(
       data: { 
       id: $id, 
       name: $name, 
       doesReceiveTravelers: $doesReceiveTravelers, 
+      canReceiveMultipleTravelers:$canReceiveMultipleTravelers
       order: $order,
       inspectionArea: {id: $inspectionAreaId }
       })
@@ -46,6 +48,7 @@ export const getAllStations = async () => {
       stations {
         id
         doesReceiveTravelers
+        canReceiveMultipleTravelers
         order
         name
         inspectionArea { id name order}
@@ -55,6 +58,19 @@ export const getAllStations = async () => {
   const response = await dataConnect.executeGraphql(query, {});
   return response.data ?? [];
 };
+export const stationsCounts = async (): Promise<Int> => {
+  const query = `
+    query {
+      stations {
+        id
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {});
+  const stations = (response.data as any)?.stations ?? [];
+  return stations.length;
+};
 
 // Read one
 export const getStationById = async (id: string) => {
@@ -63,6 +79,7 @@ export const getStationById = async (id: string) => {
       station(id: $id){
         id
         doesReceiveTravelers
+        canReceiveMultipleTravelers
         order
         name
         inspectionArea { id name order}
@@ -80,20 +97,19 @@ export const updateStation = async (
   id: string,
   input: Partial<StationInput>
 ) => {
-const query = `
-mutation UpdateStation($id: String!, $name: String!, $doesReceiveTravelers: Boolean!, $order: Int!, $inspectionAreaId: String!) {
+  const query = `
+mutation UpdateStation($id: String!, $name: String!, $doesReceiveTravelers: Boolean!, $canReceiveMultipleTravelers:Boolean!, $inspectionAreaId: String!) {
     station_update(
         id: $id
         data: {
             doesReceiveTravelers: $doesReceiveTravelers
+            canReceiveMultipleTravelers:$canReceiveMultipleTravelers
             name: $name
-            order: $order
             inspectionArea: { id: $inspectionAreaId }
         }
     )
 }
 `;
-
 
   const response = await dataConnect.executeGraphql(query, {
     variables: { id, ...input },

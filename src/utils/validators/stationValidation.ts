@@ -5,8 +5,7 @@ export const createStationSchema = yup.object({
     name: yup.string().required("Name is required"),
     order: yup
       .number()
-      .integer("Order must be an integer")
-      .required("Order is required"),
+      .integer("Order must be an integer"),
     doesReceiveTravelers: yup
       .boolean()
       .required("doesReceiveTravelers is required"),
@@ -25,8 +24,7 @@ export const updateStationSchema = yup.object({
     name: yup.string().required("Name is required"),
     order: yup
       .number()
-      .integer("Order must be an integer")
-      .required("Order is required"),
+      .integer("Order must be an integer"),
     doesReceiveTravelers: yup
       .boolean()
       .required("doesReceiveTravelers is required"),

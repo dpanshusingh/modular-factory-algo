@@ -4,6 +4,7 @@ import {
   deleteInspectionArea,
   getAllInspectionArea,
   updateInspectionArea,
+  inspectionAreaCount,
 } from "../queries/inspectionArea.query";
 import { v4 as uuidv4 } from "uuid";
 
@@ -13,10 +14,12 @@ export const createInspectionAreaController = async (
   res: Response
 ) => {
   try {
-    const { name, order } = req.body;
+    const { name } = req.body;
     const id = uuidv4();
-
-    const inspectionArea = await createInspectionArea({id, name, order });
+    const totalinspectionArea = await inspectionAreaCount();
+    const order = totalinspectionArea + 1;
+    console.log(totalinspectionArea);
+    const inspectionArea = await createInspectionArea({ id, name, order });
 
     res.status(201).json({
       success: true,
@@ -53,15 +56,15 @@ export const updateInspectionAreasController = async (
 ) => {
   try {
     const { id } = req.params;
-    const { name, order } = req.body;
-    if (!id || !name || !order) {
+    const { name } = req.body;
+    if (!id || !name) {
       return res.status(400).json({
         success: false,
         message: "Inspection ID, name and order are required",
       });
     }
 
-    const inspectionArea = await updateInspectionArea(id, { name, order });
+    const inspectionArea = await updateInspectionArea(id, { name });
     res.status(200).json({
       success: true,
       data: inspectionArea,
@@ -79,16 +82,16 @@ export const deleteInspectionAreasController = async (
 ) => {
   try {
     const { id } = req.params;
-    if(!id) {
-        return res.status(400).json({
+    if (!id) {
+      return res.status(400).json({
         success: false,
         message: "Inspection ID is required",
       });
     }
-    await deleteInspectionArea(id)
+    await deleteInspectionArea(id);
     res.status(200).json({
       success: true,
-      message: "Inspection Area deleted successfully"
+      message: "Inspection Area deleted successfully",
     });
   } catch (error: any) {
     console.error("Update inspection area error:", error);
