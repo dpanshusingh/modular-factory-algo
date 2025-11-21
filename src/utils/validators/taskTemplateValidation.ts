@@ -74,8 +74,7 @@ export const createTaskTemplateSchema = yup.object({
     name: yup.string().required("name is required"),
     order: yup
       .number()
-      .integer("order must be an integer")
-      .required("order is required"),
+      .integer("order must be an integer"),
     rankedSkills: yup
       .array()
       .of(yup.mixed<(typeof skills)[number]>().oneOf(skills))
