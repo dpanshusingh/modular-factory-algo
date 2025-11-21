@@ -35,6 +35,8 @@ app.use(
       ENV.ORIGIN_PROD,
       ENV.ORIGIN_LOCAL, // optional if you want local dev too
     ],
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );

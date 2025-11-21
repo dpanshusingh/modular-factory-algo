@@ -4,6 +4,7 @@ import {
   createTravelerTemplateTaskTemplateController,
   deleteTravelerTemplateTaskTemplateController,
   getAllTravelerTemplateTaskTemplateController,
+  getByTravelerTemplateIdController,
   getTravelerTemplateTaskTemplateByIdController,
   updateTravelerTemplateTaskTemplateController,
 } from "../controllers/travelTemplateTaskTemplate.controller";
@@ -12,6 +13,7 @@ import {
   createTravelerTemplateTaskTemplateSchema,
   deleteTravelerTemplateTaskTemplateSchema,
   getTravelerTemplateTaskTemplateByIdSchema,
+  getTravelerTemplateTaskTemplatesByTravelerIdSchema,
   updateTravelerTemplateTaskTemplateSchema,
 } from "../utils/validators/travelerTemplateTaskTemplate.validation";
 import { authenticateToken } from "../middlewares/authMiddleware";
@@ -41,6 +43,12 @@ router.delete(
   "/:id",
   validateRequest(deleteTravelerTemplateTaskTemplateSchema),
   deleteTravelerTemplateTaskTemplateController
+);
+
+router.get(
+  "/by-traveler-template/:travelerTemplateId",
+  validateRequest(getTravelerTemplateTaskTemplatesByTravelerIdSchema),
+  getByTravelerTemplateIdController
 );
 
 export { router as travelerTemplateTaskTemplateRoutes };

@@ -4,7 +4,8 @@ import {
   createTravelerTemplateTaskTemplate,
   deleteTravelerTemplateTaskTemplate,
   getAllTravelerTemplateTaskTemplates,
-  getTravelerTemplateTaskTemplateById,
+  // getTravelerTemplateTaskTemplateById,
+  getTravelerTemplateTaskTemplatesByTravelerId,
   updateTravelerTemplateTaskTemplate,
 } from "../queries/travelerTemplateTaskTemplate.query";
 
@@ -48,7 +49,7 @@ export const getTravelerTemplateTaskTemplateByIdController = async (
 ) => {
   try {
     const TravelerTemplateTaskTemplates =
-      await getTravelerTemplateTaskTemplateById(req.params.id);
+      await getTravelerTemplateTaskTemplatesByTravelerId(req.params.id);
     if (!TravelerTemplateTaskTemplates)
       return res.status(404).json({ message: "Not found" });
     res.json(TravelerTemplateTaskTemplates);
@@ -56,6 +57,21 @@ export const getTravelerTemplateTaskTemplateByIdController = async (
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getByTravelerTemplateIdController = async (req: Request,
+  res: Response) => {
+  try {
+    const travelerTemplateId = req.params.travelerTemplateId;
+
+    const data =
+      await getTravelerTemplateTaskTemplatesByTravelerId(travelerTemplateId);
+
+    return res.json(data);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
 
 export const updateTravelerTemplateTaskTemplateController = async (
   req: Request,
