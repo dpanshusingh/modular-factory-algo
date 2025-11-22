@@ -42,6 +42,25 @@ export const getAllTravelerTemplateTaskTemplates = async () => {
 };
 
 // Read one
+export const getTravelerTemplateTaskTemplateById = async (id: string) => {
+  const query = `
+    query GetTravelerTemplateTaskTemplate($id: String!) {
+      travelerTemplateTaskTemplate(id: $id) {
+         id
+        taskTemplate{
+          id name station { id order name }
+        }
+        travelerTemplate{ id name }
+      }
+    }
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id },
+  });
+  return response.data;
+};
+
+// Read one by travelerId
 export const getTravelerTemplateTaskTemplatesByTravelerId = async (
   id: string
 ) => {
@@ -74,9 +93,6 @@ export const getTravelerTemplateTaskTemplatesByTravelerId = async (
 
   return response.data;
 };
-
-
-
 
 // Update
 export const updateTravelerTemplateTaskTemplate = async (

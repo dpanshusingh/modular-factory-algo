@@ -13,6 +13,15 @@ export const createTravelerTemplateInspectionItemTemplateSchema = yup.object({
   }),
 });
 
+export const getTravelerTemplateInspectionTemplatesByTravelerIdSchema = yup.object({
+  params: yup.object({
+    travelerTemplateId: yup
+      .string()
+      .uuid("Invalid traveler template ID")
+      .required("Traveler template ID is required"),
+  }),
+})
+
 export const updateTravelerTemplateInspectionItemTemplateSchema = yup.object({
   params: yup.object({
     id: yup

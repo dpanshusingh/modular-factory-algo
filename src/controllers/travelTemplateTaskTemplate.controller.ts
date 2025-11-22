@@ -4,11 +4,13 @@ import {
   createTravelerTemplateTaskTemplate,
   deleteTravelerTemplateTaskTemplate,
   getAllTravelerTemplateTaskTemplates,
+  getTravelerTemplateTaskTemplateById,
   // getTravelerTemplateTaskTemplateById,
   getTravelerTemplateTaskTemplatesByTravelerId,
   updateTravelerTemplateTaskTemplate,
 } from "../queries/travelerTemplateTaskTemplate.query";
 
+// create 
 export const createTravelerTemplateTaskTemplateController = async (
   req: Request,
   res: Response
@@ -30,6 +32,7 @@ export const createTravelerTemplateTaskTemplateController = async (
   }
 };
 
+// Read all
 export const getAllTravelerTemplateTaskTemplateController = async (
   _req: Request,
   res: Response
@@ -43,13 +46,14 @@ export const getAllTravelerTemplateTaskTemplateController = async (
   }
 };
 
+// Read one
 export const getTravelerTemplateTaskTemplateByIdController = async (
   req: Request,
   res: Response
 ) => {
   try {
     const TravelerTemplateTaskTemplates =
-      await getTravelerTemplateTaskTemplatesByTravelerId(req.params.id);
+      await getTravelerTemplateTaskTemplateById(req.params.id);
     if (!TravelerTemplateTaskTemplates)
       return res.status(404).json({ message: "Not found" });
     res.json(TravelerTemplateTaskTemplates);
@@ -58,6 +62,7 @@ export const getTravelerTemplateTaskTemplateByIdController = async (
   }
 };
 
+// Read one by traveler id
 export const getByTravelerTemplateIdController = async (req: Request,
   res: Response) => {
   try {
@@ -72,7 +77,7 @@ export const getByTravelerTemplateIdController = async (req: Request,
   }
 };
 
-
+// Update
 export const updateTravelerTemplateTaskTemplateController = async (
   req: Request,
   res: Response
@@ -86,6 +91,7 @@ export const updateTravelerTemplateTaskTemplateController = async (
   }
 };
 
+// Delete
 export const deleteTravelerTemplateTaskTemplateController = async (
   req: Request,
   res: Response

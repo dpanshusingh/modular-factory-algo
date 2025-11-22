@@ -43,7 +43,6 @@ export const getAllInspectionItemTemplates = async () => {
         id
         isPhotoRequired
         isVideoRequired
-        leadType
         name
         order
         inspectionArea { 
@@ -66,7 +65,6 @@ export const getInspectionItemTemplateById = async (id: string) => {
         id
         isPhotoRequired
         isVideoRequired
-        leadType
         name
         order
         inspectionArea { 

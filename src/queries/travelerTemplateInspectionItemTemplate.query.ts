@@ -70,6 +70,40 @@ export const getTravelerTemplateInspectionItemTemplateById = async (
   return response.data;
 };
 
+// Read one by travelerId
+export const getTravelerTemplateInspectionTemplatesByTravelerId = async (
+  id: string
+) => {
+  const query = `
+    query GetTravelerTemplateInspectionItemTemplates($id: String!) {
+      travelerTemplateInspectionItemTemplates(
+        where: { travelerTemplate: { id: { eq: $id } } }
+      ) {
+        id
+        inspectionItemTemplate {
+          id
+          name
+          inspectionArea {
+            id
+            order
+            name
+          }
+        }
+        travelerTemplate {
+          id
+          name
+        }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id },
+  });
+
+  return response.data;
+};
+
 // Update
 export const updateTravelerTemplateInspectionItemTemplate = async (
   id: string,

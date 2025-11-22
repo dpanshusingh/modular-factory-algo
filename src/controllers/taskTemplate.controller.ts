@@ -7,7 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 export const createTaskTemplateController = async (req: Request, res: Response) => {
   try {
       const id = uuidv4();
-    const input = {...req.body, id};
+      const order = 1;
+    const input = {...req.body, id, order};
 
     const taskTemplate = await createTaskTemplate(input);
 

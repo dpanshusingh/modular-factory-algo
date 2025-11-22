@@ -71,7 +71,7 @@ app.use("/api/ptoManagement", PtoManagementRoutes);
 
 app.use("/api/module", moduleRouter);
 
-app.use("/api/department", departmentRoutes);
+app.use("/api/departments", departmentRoutes);
 
 app.use(errorMiddleware);
 

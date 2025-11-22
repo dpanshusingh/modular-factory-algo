@@ -5,9 +5,11 @@ import {
   deleteTravelerTemplateInspectionItemTemplate,
   getAllTravelerTemplateInspectionItemTemplates,
   getTravelerTemplateInspectionItemTemplateById,
+  getTravelerTemplateInspectionTemplatesByTravelerId,
   updateTravelerTemplateInspectionItemTemplate,
 } from "../queries/travelerTemplateInspectionItemTemplate.query";
 
+// Create 
 export const createTravelerTemplateInspectionItemTemplateController = async (
   req: Request,
   res: Response
@@ -28,6 +30,7 @@ export const createTravelerTemplateInspectionItemTemplateController = async (
   }
 };
 
+// Read all
 export const getAllTravelerTemplateInspectionItemTemplateController = async (
   _req: Request,
   res: Response
@@ -41,6 +44,7 @@ export const getAllTravelerTemplateInspectionItemTemplateController = async (
   }
 };
 
+// Read by id
 export const getTravelerTemplateInspectionItemTemplateByIdController = async (
   req: Request,
   res: Response
@@ -56,6 +60,22 @@ export const getTravelerTemplateInspectionItemTemplateByIdController = async (
   }
 };
 
+// Read one by traveler id
+export const getByTravelerTemplateIdController = async (req: Request,
+  res: Response) => {
+  try {
+    const travelerTemplateId = req.params.travelerTemplateId;
+
+    const data =
+      await getTravelerTemplateInspectionTemplatesByTravelerId(travelerTemplateId);
+
+    return res.json(data);
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+// Update
 export const updateTravelerTemplateInspectionItemTemplateController = async (
   req: Request,
   res: Response
@@ -72,6 +92,7 @@ export const updateTravelerTemplateInspectionItemTemplateController = async (
   }
 };
 
+// Delete
 export const deleteTravelerTemplateInspectionItemTemplateController = async (
   req: Request,
   res: Response

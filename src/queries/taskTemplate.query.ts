@@ -125,9 +125,11 @@ export const getAllTaskTemplates = async () => {
         id
         isPhotoRequired
         isVideoRequired
-        leadType
         maxWorkers
         minWorkers
+        description
+        department{id name}
+        prerequisiteTaskTemplateId
         moduleCharacteristicType
         name
         order
@@ -154,7 +156,6 @@ export const getTaskTemplateById = async (id: string) => {
         id
         isPhotoRequired
         isVideoRequired
-        leadType
         maxWorkers
         minWorkers
         moduleCharacteristicType
@@ -196,7 +197,7 @@ mutation UpdateTaskTemplate(
       $rankedSkills: [Skill!]
       $stationId: String!
       $description:String
-          $prerequisiteTaskTemplateId:String
+      $prerequisiteTaskTemplateId:String
        
 ) {
     taskTemplate_update(
@@ -212,8 +213,8 @@ mutation UpdateTaskTemplate(
           order: $order
           rankedSkills: $rankedSkills
           station: { id: $stationId }
-           description:$description
-        prerequisiteTaskTemplateId:$prerequisiteTaskTemplateId
+          description:$description
+          prerequisiteTaskTemplateId:$prerequisiteTaskTemplateId
         }
     )
 }
