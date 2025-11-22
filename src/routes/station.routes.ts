@@ -8,7 +8,7 @@ import { createStationSchema, deleteStationSchema, updateStationSchema } from ".
 const router = Router()
 
 router.use(apiLimiter)
-router.use(authenticateToken)
+//router.use(authenticateToken)
 
 router.post("/", validateRequest(createStationSchema) , createStationController)
 router.get("/", getAllStationsController)

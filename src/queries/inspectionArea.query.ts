@@ -10,12 +10,13 @@ function toInt(n: number): Int {
 }
 
 export interface InspectionAreaInput {
-    name: string;
-    order: Int;
+  id: string;
+  name: string;
+  order: number;
 }
 
 // Create
-export const createInspectionArea = async (input: InspectionAreaInput & { id: string , name: string, order: Int}) => {
+export const createInspectionArea = async (input: InspectionAreaInput) => {
   const query = `
     mutation CreateInspectionArea($id: String!, $name: String!, $order: Int!) {
       inspectionArea_insert(data: { id: $id, name: $name, order: $order })
@@ -45,11 +46,29 @@ export const getAllInspectionArea = async () => {
   return response.data ?? [];
 };
 
-// Update
-export const updateInspectionArea = async (id: string, input: Partial<InspectionAreaInput>) => {
+export const inspectionAreaCount = async (): Promise<number> => {
   const query = `
-    mutation UpdateInspectionArea($id: String!, $name: String!, $order: Int!) {
-      inspectionArea_update(id: $id, data: { name: $name, order: $order })
+    query GetInspectionArea {
+      inspectionAreas {
+        id
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {});
+  const inspectionArea = (response.data as any)?.inspectionAreas ?? [];
+
+  return inspectionArea.length;
+};
+
+// Update
+export const updateInspectionArea = async (
+  id: string,
+  input: Partial<InspectionAreaInput>
+) => {
+  const query = `
+    mutation UpdateInspectionArea($id: String!, $name: String!) {
+      inspectionArea_update(id: $id, data: { name: $name})
     }
   `;
 

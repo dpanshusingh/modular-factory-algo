@@ -19,7 +19,7 @@ import {
 const router = Router();
 
 router.use(apiLimiter);
-//router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.post(
   "/",
@@ -28,7 +28,7 @@ router.post(
 );
 router.get("/", getAllDepartmentsController);
 router.get(
-  "/:id",
+  "/:ids",
   validateRequest(getDepartmentByIdSchema),
   getDepartmentByIdController
 );

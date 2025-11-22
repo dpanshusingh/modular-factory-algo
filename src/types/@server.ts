@@ -1,3 +1,19 @@
+export type LeadType =
+  | "closeup"
+  | "drywall"
+  | "electrical"
+  | "exterior"
+  | "floors"
+  | "hvac"
+  | "insulation"
+  | "interior"
+  | "office"
+  | "paint"
+  | "plumbing"
+  | "roofing"
+  | "shipping"
+  | "walls";
+
 export interface User {
   id: number;
   email: string;
