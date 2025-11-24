@@ -19,7 +19,7 @@ export const updateModuleSchema = yup.object({
     traveler_template_id: yup
       .string(),
     order: yup.number().integer().min(1).optional(),
-    serial_number: yup.string().optional(),
+    serial_number: yup.string(),
   }),
 });
 
