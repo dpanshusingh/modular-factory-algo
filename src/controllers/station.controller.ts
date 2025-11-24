@@ -7,6 +7,7 @@ import {
   getAllStations,
   getStationById,
   updateStation,
+  UpdateStationOrder,
   stationsCounts,
 } from "../queries/station.query";
 
@@ -50,7 +51,10 @@ export const getAllStationsController = async (
 ) => {
   try {
     const stations = await getAllStations();
-    res.status(201).json(stations);
+      res.status(200).json({
+      success: true,
+      data: stations,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -78,6 +82,25 @@ export const updateStationController = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateModuleOrderController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // Body may contain only "order"
+    const updatePayload: any = {};
+    if (req.body.order !== undefined) updatePayload.order = req.body.order;
+    await UpdateStationOrder(id, updatePayload);
+    const updatedStations = await getStationById(id);
+    res.status(200).json({
+      success: true,
+      message: "Station reordered successfully",
+      data: updatedStations,
+    });
+  } catch (error: any) {
+    console.error("update Station error:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };
 

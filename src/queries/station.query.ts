@@ -45,7 +45,7 @@ export const createStation = async (input: StationInput & { id: string }) => {
 export const getAllStations = async () => {
   const query = `
     query {
-      stations {
+      stations (orderBy: [{ order: ASC }]) {
         id
         doesReceiveTravelers
         canReceiveMultipleTravelers
@@ -58,18 +58,37 @@ export const getAllStations = async () => {
   const response = await dataConnect.executeGraphql(query, {});
   return response.data ?? [];
 };
-export const stationsCounts = async (): Promise<Int> => {
+
+
+export const stationsCounts = async (): Promise<number> => {
   const query = `
-    query {
+   query Countstations{
       stations {
-        id
+        _count
       }
-    }
+}
   `;
 
   const response = await dataConnect.executeGraphql(query, {});
-  const stations = (response.data as any)?.stations ?? [];
-  return stations.length;
+  const count = (response.data as any)?.stations?.[0]?._count ?? 0;
+
+  return count;
+
+}
+
+export const UpdateStationOrder = async (
+  id: string,
+  input: Partial<StationInput>
+) => {
+  const query = `
+    mutation UpdateStation($id: String!, $data: station_update_input!) {
+      station_update(id: $id, data: $data)
+    }
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id, data: input },
+  });
+  return response.data ?? null;
 };
 
 // Read one

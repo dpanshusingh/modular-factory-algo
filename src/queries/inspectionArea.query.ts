@@ -34,7 +34,7 @@ export const createInspectionArea = async (input: InspectionAreaInput) => {
 export const getAllInspectionArea = async () => {
   const query = `
     query GetInspectionArea {
-      inspectionAreas {
+      inspectionAreas (orderBy: [{ order: ASC }]) {
         id
         name
         order
@@ -48,17 +48,72 @@ export const getAllInspectionArea = async () => {
 
 export const inspectionAreaCount = async (): Promise<number> => {
   const query = `
-    query GetInspectionArea {
+   query CountinspectionArea{
       inspectionAreas {
+        _count
+      }
+}
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {});
+  const count = (response.data as any)?.inspectionAreas?.[0]?._count ?? 0;
+  return count;
+};
+
+
+// Read one
+export const getInspectionAreaById = async (id: string) => {
+  const query = `
+    query GetInspectionAreaById($id: String!) {
+      inspectionArea(id: $id){
         id
+        name
+        order
+      }
+    }
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id },
+  });
+  return response.data;
+};
+
+
+export const UpdateInspectionAreaOrder = async (
+  id: string,
+  input: Partial<InspectionAreaInput>
+) => {
+  const query = `
+    mutation UpdateinspectionArea($id: String!, $data: inspectionArea_update_input!) {
+      inspectionArea_update(id: $id, data: $data)
+    }
+  `;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id, data: input },
+  });
+  return response.data ?? null;
+};
+
+export const getStationsFromInspectionAreas = async (id: string) => {
+  const query = `
+    query GetStations($id: String!) {
+      stations(
+        where: {
+          inspectionArea: { id: { eq: $id } }
+        }
+        orderBy: { order: ASC }
+      ) {
+        id
+        order
       }
     }
   `;
 
-  const response = await dataConnect.executeGraphql(query, {});
-  const inspectionArea = (response.data as any)?.inspectionAreas ?? [];
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id },
+  });
 
-  return inspectionArea.length;
+  return (response.data as any)?.stations ?? [];
 };
 
 // Update
