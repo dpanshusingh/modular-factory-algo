@@ -4,6 +4,7 @@ import {
   updateModuleController,
   getAllModuleController,
   getByIdModuleController,
+  updateModuleOrderController,
 } from "../controllers/module.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -24,6 +25,7 @@ router.post("/", validateRequest(createModuleSchema), createModuleController);
 router.get("/", getAllModuleController);
 router.get("/:id", validateRequest(paramModuleSchema), getByIdModuleController);
 router.put("/:id", validateRequest(updateModuleSchema), updateModuleController);
+router.put("updateOrder/:id", validateRequest(updateModuleSchema), updateModuleOrderController);
 router.delete(
   "/:id",
   validateRequest(paramModuleSchema),

@@ -6,6 +6,7 @@ import {
   UpdateModule,
   getAllModuleCount,
   DeleteModule,
+  UpdateModuleOrder,
 } from "../queries/module.query";
 import { v4 as uuidv4 } from "uuid";
 import { randomBytes } from "crypto";
@@ -91,10 +92,11 @@ export const getByIdModuleController = async (req: Request, res: Response) => {
 export const updateModuleController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { moduleProfileId, travelerId, travelerTemplateId, order } = req.body;
+    const { serialNumber ,moduleProfileId, travelerId, travelerTemplateId, order } = req.body;
 
     // Step 1: Update the record
     await UpdateModule(id, {
+      serialNumber,
       moduleProfileId,
       travelerId,
       travelerTemplateId,
@@ -119,6 +121,35 @@ export const updateModuleController = async (req: Request, res: Response) => {
     }
   }
 };
+
+// Update module order
+export const updateModuleOrderController = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    // Body may contain only "order"
+    const updatePayload: any = {};
+
+    if (req.body.order !== undefined) updatePayload.order = req.body.order;
+    if (req.body.moduleProfileId) updatePayload.moduleProfileId = req.body.moduleProfileId;
+    if (req.body.travelerId) updatePayload.travelerId = req.body.travelerId;
+    if (req.body.travelerTemplateId) updatePayload.travelerTemplateId = req.body.travelerTemplateId;
+
+    await UpdateModuleOrder(id, updatePayload);
+
+    const updatedModule = await GetByIdModule(id);
+
+    res.status(200).json({
+      success: true,
+      message: "Module updated successfully",
+      data: updatedModule,
+    });
+  } catch (error: any) {
+    console.error("update module error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 
 // Delete module
 export const deleteModuleeaController = async (req: Request, res: Response) => {
