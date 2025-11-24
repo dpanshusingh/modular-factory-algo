@@ -7,7 +7,7 @@ import { Router } from "express";
 
 const router = Router();
 router.use(apiLimiter)
-//router.use(authenticateToken)
+router.use(authenticateToken)
 
 router.post("/", validateRequest(createInspectionAreaSchema) , createInspectionAreaController);
 router.get("/", getAllInspectionAreasController);
