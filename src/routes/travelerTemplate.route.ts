@@ -8,7 +8,7 @@ import { createTravelerTemplateController, deleteTravelerTemplateController, get
 const router = Router();
 
 router.use(apiLimiter);
-//router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.post("/", validateRequest(createTravelerTemplateSchema), createTravelerTemplateController);
 router.get("/", getAllTravelerTemplatesController);
