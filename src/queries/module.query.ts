@@ -55,9 +55,9 @@ export const getAllModule = async () => {
     query {
       modules {
         id
-        moduleProfileId
+        moduleProfile{id name project{id name} }
         travelerId
-        travelerTemplateId
+        travelerTemplate{id name}
         order
         serialNumber
       }

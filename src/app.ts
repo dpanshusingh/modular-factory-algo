@@ -36,6 +36,8 @@ app.use(
       ENV.ORIGIN_PROD,
       ENV.ORIGIN_LOCAL, // optional if you want local dev too
     ],
+    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );
@@ -69,7 +71,7 @@ app.use("/api/ptoManagement", PtoManagementRoutes);
 
 app.use("/api/module", moduleRouter);
 
-app.use("/api/department", departmentRoutes);
+app.use("/api/departments", departmentRoutes);
 
 app.use(errorMiddleware);
 

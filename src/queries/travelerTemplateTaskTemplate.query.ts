@@ -60,6 +60,40 @@ export const getTravelerTemplateTaskTemplateById = async (id: string) => {
   return response.data;
 };
 
+// Read one by travelerId
+export const getTravelerTemplateTaskTemplatesByTravelerId = async (
+  id: string
+) => {
+  const query = `
+    query GetTravelerTemplateTaskTemplates($id: String!) {
+      travelerTemplateTaskTemplates(
+        where: { travelerTemplate: { id: { eq: $id } } }
+      ) {
+        id
+        taskTemplate {
+          id
+          name
+          station {
+            id
+            order
+            name
+          }
+        }
+        travelerTemplate {
+          id
+          name
+        }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id },
+  });
+
+  return response.data;
+};
+
 // Update
 export const updateTravelerTemplateTaskTemplate = async (
   id: string,
