@@ -14,7 +14,6 @@ import {
 } from "../utils/validators/inspectionAreaValidation";
 import { apiLimiter } from "./../middlewares/rateLimiter";
 import { Router } from "express";
-
 const router = Router();
 router.use(apiLimiter);
 router.use(authenticateToken);
