@@ -17,6 +17,7 @@ import { Router } from "express";
 const router = Router();
 router.use(apiLimiter);
 router.use(authenticateToken);
+
 router.post(
   "/",
   validateRequest(createInspectionAreaSchema),
@@ -24,6 +25,7 @@ router.post(
 );
 router.get("/", getAllInspectionAreasStationsController);
 router.get("/:id", getInspectionAreaByIDController);
+
 router.put(
   "/:id",
   validateRequest(updateInspectionAreaSchema),
@@ -34,4 +36,5 @@ router.delete(
   validateRequest(deleteInspectionAreaSchema),
   deleteInspectionAreasController
 );
+
 export { router as inspectionAreaRoutes };
