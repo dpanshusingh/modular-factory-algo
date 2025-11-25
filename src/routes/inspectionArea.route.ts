@@ -1,10 +1,9 @@
 import {
   createInspectionAreaController,
   deleteInspectionAreasController,
-  getAllInspectionAreasController,
   updateInspectionAreasController,
   getInspectionAreaByIDController,
-  getStationsInspectionAreasController,
+  getAllInspectionAreasStationsController,
 } from "../controllers/inspectionArea.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -18,16 +17,15 @@ import { Router } from "express";
 
 const router = Router();
 router.use(apiLimiter);
-router.use(authenticateToken);
+//router.use(authenticateToken);
 
 router.post(
   "/",
   validateRequest(createInspectionAreaSchema),
   createInspectionAreaController
 );
-router.get("/", getAllInspectionAreasController);
+router.get("/", getAllInspectionAreasStationsController);
 router.get("/:id", getInspectionAreaByIDController);
-router.get("/stations/:id", getStationsInspectionAreasController);
 
 router.put(
   "/:id",
