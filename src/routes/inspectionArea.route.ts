@@ -4,6 +4,7 @@ import {
   updateInspectionAreasController,
   getInspectionAreaByIDController,
   getAllInspectionAreasStationsController,
+  updateInspectionAreaOrderController,
 } from "../controllers/inspectionArea.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -30,6 +31,11 @@ router.put(
   "/:id",
   validateRequest(updateInspectionAreaSchema),
   updateInspectionAreasController
+);
+router.put(
+  "updateorder/:id",
+//   validateRequest(updateInspectionAreaSchema),
+  updateInspectionAreaOrderController
 );
 router.delete(
   "/:id",

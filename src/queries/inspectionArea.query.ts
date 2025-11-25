@@ -51,6 +51,7 @@ interface ExecuteGraphqlResponse {
 }
 
 interface InspectionAreaStationOrders {
+  id: string;
   inspectionOrder: number;
   inspectionName: string;
   stationOrders: number[];
@@ -112,6 +113,7 @@ export const getInspectionAreaStationOrders = async (): Promise<
 
   // ALWAYS include all inspection areas
   return inspectionAreas.map((area) => ({
+    id: area.id,
     inspectionOrder: area.order,
     inspectionName: area.name,
     stationOrders: stationOrdersByArea[area.id] ?? [],
