@@ -31,13 +31,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/public", express.static("public"));
 app.use(
   cors({
-    origin: [
-      ENV.ORIGIN_DEV,
-      ENV.ORIGIN_PROD,
-      ENV.ORIGIN_LOCAL, // optional if you want local dev too
-    ],
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: ENV.ORIGINS,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );

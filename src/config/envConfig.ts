@@ -10,9 +10,7 @@ if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not defined");
 if (!process.env.FIREBASE_PROJECT_ID)
   throw new Error("FIREBASE_PROJECT_ID is not defined");
 
-if (!process.env.ORIGIN_DEV) throw new Error("ORIGIN_DEV is not defined");
-if (!process.env.ORIGIN_PROD) throw new Error("ORIGIN_PROD is not defined");
-if (!process.env.ORIGIN_LOCAL) throw new Error("ORIGIN_LOCAL is not defined");
+if (!process.env.ORIGINS) throw new Error("ORIGINS is not defined");
 
 if (!process.env.FIREBASE_PRIVATE_KEY)
   throw new Error("FIREBASE_PRIVATE_KEY is not defined");
@@ -27,9 +25,7 @@ export const ENV = {
   // Server configuration
   PORT: process.env.PORT,
   CORS_ORIGIN: process.env.CORS_ORIGIN,
-  ORIGIN_DEV: process.env.ORIGIN_DEV,
-  ORIGIN_PROD: process.env.ORIGIN_PROD,
-  ORIGIN_LOCAL: process.env.ORIGIN_LOCAL,
+  ORIGINS: process.env.ORIGINS?.split(',').map(origin => origin.trim()) || [],
   NODE_ENV: process.env.NODE_ENV || "development",
 
   // Database configuration
