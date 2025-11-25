@@ -53,7 +53,7 @@ export const createModule = async (input: moduleInput) => {
 export const getAllModule = async () => {
   const query = `
     query {
-      modules {
+      modules(orderBy: {order: ASC}) {
         id
         moduleProfile{id name project{id name} }
         travelerId
@@ -75,26 +75,20 @@ export const getAllModule = async () => {
 
 export const getAllModuleCount = async () => {
   const query = `
-    query {
+    query CountModules{
       modules {
-        id
-        moduleProfileId
-        travelerId
-        travelerTemplateId
-        order
-        serialNumber
+        _count
       }
     }
   `;
-
   const response = await dataConnect.executeGraphql(query, {});
+  const count = (response.data as any)?.modules?.[0]?._count ?? 0;
+  return count;
+ 
+  
+}
 
-  // Read correct field "modules"
-  const modules = (response.data as any)?.modules ?? [];
 
-  // Return total count
-  return modules.length;
-};
 
 
 //GetById
@@ -123,8 +117,8 @@ export const GetByIdModule = async (id: string) => {
 
 export const UpdateModule = async (id: string, input: Partial<moduleInput>) => {
   const query = `
-    mutation UpdateModule($id:String , $moduleProfileId: String, $travelerId: String,$travelerTemplateId: String,$order:Int) {
-      module_update(id: $id, data: {moduleProfileId: $moduleProfileId, travelerId: $travelerId,travelerTemplateId: $travelerTemplateId,order: $order })
+    mutation UpdateModule($id:String , $serialNumber: String ,$moduleProfileId: String, $travelerId: String,$travelerTemplateId: String,$order:Int) {
+      module_update(id: $id, data: {serialNumber: $serialNumber,moduleProfileId: $moduleProfileId, travelerId: $travelerId,travelerTemplateId: $travelerTemplateId,order: $order })
     }
   `;
 
@@ -134,6 +128,24 @@ export const UpdateModule = async (id: string, input: Partial<moduleInput>) => {
 
   return (response.data as any)?.module?.[0] ?? null;
 };
+
+export const UpdateModuleOrder = async (
+  id: string,
+  input: Partial<moduleInput>
+) => {
+  const query = `
+    mutation UpdateModule($id: String!, $data: module_update_input!) {
+      module_update(id: $id, data: $data)
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id, data: input },
+  });
+
+  return response.data ?? null;
+};
+
 
 // Delete Module (Only if travelerId is NULL)
 export const DeleteModule = async (id: string) => {
