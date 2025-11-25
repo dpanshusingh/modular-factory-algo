@@ -2,12 +2,11 @@ import { Request, Response } from "express";
 import {
   createInspectionArea,
   deleteInspectionArea,
-  getAllInspectionArea,
   UpdateInspectionAreaOrder,
   updateInspectionArea,
   inspectionAreaCount,
+  getInspectionAreaStationOrders,
   getInspectionAreaById,
-  getStationsFromInspectionAreas,
 } from "../queries/inspectionArea.query";
 import { v4 as uuidv4 } from "uuid";
 
@@ -35,24 +34,29 @@ export const createInspectionAreaController = async (
   }
 };
 
+
 // Read Inspection Areas
-export const getAllInspectionAreasController = async (
+export const getAllInspectionAreasStationsController = async (
   req: Request,
   res: Response
 ) => {
   try {
-    const projects = await getAllInspectionArea();
+    const { id } = req.params;
+    const station = await getInspectionAreaStationOrders();
     res.status(200).json({
       success: true,
-      data: projects,
+      data: {inspectionAreas:station},
     });
   } catch (error: any) {
-    console.error("Get inspection area error:", error);
+    console.error("Get inspection area station error:", error);
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-export const getInspectionAreaByIDController = async (req: Request, res: Response) => {
+export const getInspectionAreaByIDController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const inspectionArea = await getInspectionAreaById(req.params.id);
     if (!inspectionArea) return res.status(404).json({ message: "Not found" });
@@ -62,8 +66,10 @@ export const getInspectionAreaByIDController = async (req: Request, res: Respons
   }
 };
 
-
-export const updateModuleOrderController = async (req: Request, res: Response) => {
+export const updateModuleOrderController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { id } = req.params;
     // Body may contain only "order"
@@ -82,33 +88,32 @@ export const updateModuleOrderController = async (req: Request, res: Response) =
   }
 };
 
-
 // Read stations Inspection Areas
-export const getStationsInspectionAreasController = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const { id } = req.params;
+// export const getStationsInspectionAreasController = async (
+//   req: Request,
+//   res: Response
+// ) => {
+//   try {
+//     const { id } = req.params;
 
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        error: "InspectionArea ID is required",
-      });
-    }
+//     if (!id) {
+//       return res.status(400).json({
+//         success: false,
+//         error: "InspectionArea ID is required",
+//       });
+//     }
 
-    const stations = await getStationsFromInspectionAreas(id);
+//     const stations = await getStationsFromInspectionAreas(id);
 
-    res.status(200).json({
-      success: true,
-      data: stations,
-    });
-  } catch (error: any) {
-    console.error("Get inspection area error:", error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-};
+//     res.status(200).json({
+//       success: true,
+//       data: stations,
+//     });
+//   } catch (error: any) {
+//     console.error("Get inspection area error:", error);
+//     res.status(500).json({ success: false, error: error.message });
+//   }
+// };
 
 // Update Inspection Areas
 export const updateInspectionAreasController = async (

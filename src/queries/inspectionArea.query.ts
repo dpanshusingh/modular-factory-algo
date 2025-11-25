@@ -30,11 +30,36 @@ export const createInspectionArea = async (input: InspectionAreaInput) => {
   return response.data;
 };
 
-// Read all
-export const getAllInspectionArea = async () => {
+interface InspectionArea {
+  id: string;
+  name: string;
+  order: number;
+}
+
+interface Station {
+  order: number;
+  inspectionArea?: {
+    id: string;
+  } | null;
+}
+
+// Outer response wrapper from dataConnect.executeGraphql
+interface ExecuteGraphqlResponse {
+  inspectionAreas: InspectionArea[];
+  stations: Station[];
+  errors?: any;
+}
+
+interface InspectionAreaStationOrders {
+  inspectionOrder: number;
+  inspectionName: string;
+  stationOrders: number[];
+}
+
+export const getAllInspectionAreas = async (): Promise<InspectionArea[]> => {
   const query = `
     query GetInspectionArea {
-      inspectionAreas (orderBy: [{ order: ASC }]) {
+      inspectionAreas(orderBy: [{ order: ASC }]) {
         id
         name
         order
@@ -42,8 +67,55 @@ export const getAllInspectionArea = async () => {
     }
   `;
 
-  const response = await dataConnect.executeGraphql(query, {});
-  return response.data ?? [];
+  const response = await dataConnect.executeGraphql<ExecuteGraphqlResponse, {}>(
+    query,
+    {}
+  );
+
+  // ✅ Correct field: inspectionAreas (plural) inside data
+  return response.data?.inspectionAreas ?? [];
+};
+
+export const getInspectionAreaStationOrders = async (): Promise<
+  InspectionAreaStationOrders[]
+> => {
+  const inspectionAreas = await getAllInspectionAreas();
+
+  const query = `
+    query GetAllStations {
+      stations(orderBy: { order: ASC }) {
+        order
+        inspectionArea { id }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<ExecuteGraphqlResponse, {}>(
+    query,
+    {}
+  );
+  const allStations: Station[] = response.data?.stations ?? [];
+
+  const stationOrdersByArea: Record<string, number[]> = {};
+
+  // Group station orders by inspection area ID
+  allStations.forEach((station) => {
+    const areaId = station.inspectionArea?.id;
+    if (!areaId) return;
+
+    if (!stationOrdersByArea[areaId]) {
+      stationOrdersByArea[areaId] = [];
+    }
+
+    stationOrdersByArea[areaId].push(station.order);
+  });
+
+  // ALWAYS include all inspection areas
+  return inspectionAreas.map((area) => ({
+    inspectionOrder: area.order,
+    inspectionName: area.name,
+    stationOrders: stationOrdersByArea[area.id] ?? [],
+  }));
 };
 
 export const inspectionAreaCount = async (): Promise<number> => {
@@ -59,7 +131,6 @@ export const inspectionAreaCount = async (): Promise<number> => {
   const count = (response.data as any)?.inspectionAreas?.[0]?._count ?? 0;
   return count;
 };
-
 
 // Read one
 export const getInspectionAreaById = async (id: string) => {
@@ -78,7 +149,6 @@ export const getInspectionAreaById = async (id: string) => {
   return response.data;
 };
 
-
 export const UpdateInspectionAreaOrder = async (
   id: string,
   input: Partial<InspectionAreaInput>
@@ -92,28 +162,6 @@ export const UpdateInspectionAreaOrder = async (
     variables: { id, data: input },
   });
   return response.data ?? null;
-};
-
-export const getStationsFromInspectionAreas = async (id: string) => {
-  const query = `
-    query GetStations($id: String!) {
-      stations(
-        where: {
-          inspectionArea: { id: { eq: $id } }
-        }
-        orderBy: { order: ASC }
-      ) {
-        id
-        order
-      }
-    }
-  `;
-
-  const response = await dataConnect.executeGraphql(query, {
-    variables: { id },
-  });
-
-  return (response.data as any)?.stations ?? [];
 };
 
 // Update
