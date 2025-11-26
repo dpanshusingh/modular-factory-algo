@@ -66,7 +66,7 @@ export const getInspectionAreaByIDController = async (
   }
 };
 
-export const updateModuleOrderController = async (
+export const updateInspectionAreaOrderController = async (
   req: Request,
   res: Response
 ) => {
@@ -87,33 +87,6 @@ export const updateModuleOrderController = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
-// Read stations Inspection Areas
-// export const getStationsInspectionAreasController = async (
-//   req: Request,
-//   res: Response
-// ) => {
-//   try {
-//     const { id } = req.params;
-
-//     if (!id) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "InspectionArea ID is required",
-//       });
-//     }
-
-//     const stations = await getStationsFromInspectionAreas(id);
-
-//     res.status(200).json({
-//       success: true,
-//       data: stations,
-//     });
-//   } catch (error: any) {
-//     console.error("Get inspection area error:", error);
-//     res.status(500).json({ success: false, error: error.message });
-//   }
-// };
 
 // Update Inspection Areas
 export const updateInspectionAreasController = async (
