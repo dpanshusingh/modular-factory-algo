@@ -33,8 +33,8 @@ router.put(
   updateInspectionAreasController
 );
 router.put(
-  "updateorder/:id",
-//   validateRequest(updateInspectionAreaSchema),
+  "/updateorder/:id",
+   validateRequest(updateInspectionAreaSchema),
   updateInspectionAreaOrderController
 );
 router.delete(
