@@ -151,17 +151,17 @@ export const getInspectionAreaById = async (id: string) => {
   return response.data;
 };
 
-export const UpdateInspectionAreaOrder = async (
-  id: string,
-  input: Partial<InspectionAreaInput>
-) => {
+export const UpdateInspectionAreaOrder = async (id: string, order: number) => {
   const query = `
-    mutation UpdateinspectionArea($id: String!, $data: inspectionArea_update_input!) {
-      inspectionArea_update(id: $id, data: $data)
-    }
-  `;
+  mutation UpdateInspectionArea($id: String!, $order: Int!) {
+    inspectionArea_update(
+      key: { id: $id }
+      data: { order: $order }
+    )
+  }
+`;
   const response = await dataConnect.executeGraphql(query, {
-    variables: { id, data: input },
+    variables: { id, order },
   });
   return response.data ?? null;
 };

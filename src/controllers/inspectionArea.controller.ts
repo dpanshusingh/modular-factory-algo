@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import { dataConnect } from "../config/dataConnectClient";
+
 import {
   createInspectionArea,
   deleteInspectionArea,
@@ -34,7 +36,6 @@ export const createInspectionAreaController = async (
   }
 };
 
-
 // Read Inspection Areas
 export const getAllInspectionAreasStationsController = async (
   req: Request,
@@ -45,7 +46,7 @@ export const getAllInspectionAreasStationsController = async (
     const station = await getInspectionAreaStationOrders();
     res.status(200).json({
       success: true,
-      data: {inspectionAreas:station},
+      data: { inspectionAreas: station },
     });
   } catch (error: any) {
     console.error("Get inspection area station error:", error);
@@ -66,25 +67,53 @@ export const getInspectionAreaByIDController = async (
   }
 };
 
+// Reorder Update
+
+interface InspectionArea {
+  id: string;
+  inspectionOrder: number;
+}
+
 export const updateInspectionAreaOrderController = async (
   req: Request,
   res: Response
 ) => {
+  const { id } = req.params;
+  const { oldOrder, newOrder } = req.body;
+  const list: InspectionArea[] = await getInspectionAreaStationOrders();
+  const updates: { id: string; inspectionOrder: number }[] = [];
+
+  let between: InspectionArea[] = [];
+
+  if (oldOrder < newOrder) {
+    between = list.filter(
+      (x: InspectionArea) =>
+        x.inspectionOrder > oldOrder && x.inspectionOrder <= newOrder
+    );
+    between.forEach((x: InspectionArea) =>
+      updates.push({ id: x.id, inspectionOrder: x.inspectionOrder - 1 })
+    );
+  } else {
+    between = list.filter(
+      (x: InspectionArea) =>
+        x.inspectionOrder >= newOrder && x.inspectionOrder < oldOrder
+    );
+    between.forEach((x: InspectionArea) =>
+      updates.push({ id: x.id, inspectionOrder: x.inspectionOrder + 1 })
+    );
+  }
+  updates.push({ id, inspectionOrder: newOrder });
   try {
-    const { id } = req.params;
-    // Body may contain only "order"
-    const updatePayload: any = {};
-    if (req.body.order !== undefined) updatePayload.order = req.body.order;
-    await UpdateInspectionAreaOrder(id, updatePayload);
-    const updatedInspectionArea = await getInspectionAreaById(id);
-    res.status(200).json({
-      success: true,
-      message: "Inspection Area reordered successfully",
-      data: updatedInspectionArea,
-    });
-  } catch (error: any) {
-    console.error("update InspectionArea error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    await Promise.all(
+      updates.map((item) =>
+        UpdateInspectionAreaOrder(item.id, item.inspectionOrder)
+      )
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to reorder Inspection Area" });
   }
 };
 

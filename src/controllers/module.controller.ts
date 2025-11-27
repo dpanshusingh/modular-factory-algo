@@ -14,7 +14,8 @@ import { randomBytes } from "crypto";
 // Create module
 export const createModuleController = async (req: Request, res: Response) => {
   try {
-    const { moduleProfileId, travelerId, travelerTemplateId,serialNumber} = req.body;
+    const { moduleProfileId, travelerId, travelerTemplateId, serialNumber } =
+      req.body;
     const id = uuidv4();
     const orderCount = await getAllModuleCount();
     const order = orderCount + 1;
@@ -92,7 +93,13 @@ export const getByIdModuleController = async (req: Request, res: Response) => {
 export const updateModuleController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { serialNumber ,moduleProfileId, travelerId, travelerTemplateId, order } = req.body;
+    const {
+      serialNumber,
+      moduleProfileId,
+      travelerId,
+      travelerTemplateId,
+      order,
+    } = req.body;
 
     // Step 1: Update the record
     await UpdateModule(id, {
@@ -123,7 +130,10 @@ export const updateModuleController = async (req: Request, res: Response) => {
 };
 
 // Update module order
-export const updateModuleOrderController = async (req: Request, res: Response) => {
+export const updateModuleOrderController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { id } = req.params;
 
@@ -131,9 +141,6 @@ export const updateModuleOrderController = async (req: Request, res: Response) =
     const updatePayload: any = {};
 
     if (req.body.order !== undefined) updatePayload.order = req.body.order;
-    if (req.body.moduleProfileId) updatePayload.moduleProfileId = req.body.moduleProfileId;
-    if (req.body.travelerId) updatePayload.travelerId = req.body.travelerId;
-    if (req.body.travelerTemplateId) updatePayload.travelerTemplateId = req.body.travelerTemplateId;
 
     await UpdateModuleOrder(id, updatePayload);
 
@@ -149,7 +156,6 @@ export const updateModuleOrderController = async (req: Request, res: Response) =
     res.status(500).json({ success: false, error: error.message });
   }
 };
-
 
 // Delete module
 export const deleteModuleeaController = async (req: Request, res: Response) => {

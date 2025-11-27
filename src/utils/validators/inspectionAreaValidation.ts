@@ -14,8 +14,18 @@ export const updateInspectionAreaSchema = yup.object({
   }),
 });
 
+export const updateOrderInspectionAreaSchema = yup.object({
+  params: yup.object({
+    id: yup.string().uuid("Invalid ID").required("Station ID is required"),
+  }),
+  body: yup.object({
+    neworder: yup.number().integer("old Order must be an integer"),
+    oldOrder: yup.number().integer("old Order must be an integer"),
+  }),
+});
+
 export const deleteInspectionAreaSchema = yup.object({
   params: yup.object({
-    id: yup.string().uuid("Invalid ID format").required("ID is required"),
+  id: yup.string().uuid("Invalid ID format").required("ID is required"),
   }),
 });
