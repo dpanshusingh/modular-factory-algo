@@ -12,6 +12,7 @@ import {
   createInspectionAreaSchema,
   deleteInspectionAreaSchema,
   updateInspectionAreaSchema,
+  updateOrderInspectionAreaSchema,
 } from "../utils/validators/inspectionAreaValidation";
 import { apiLimiter } from "./../middlewares/rateLimiter";
 import { Router } from "express";
@@ -34,7 +35,7 @@ router.put(
 );
 router.put(
   "/updateorder/:id",
-   validateRequest(updateInspectionAreaSchema),
+  validateRequest(updateOrderInspectionAreaSchema),
   updateInspectionAreaOrderController
 );
 router.delete(
