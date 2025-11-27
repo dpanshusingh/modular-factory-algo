@@ -25,7 +25,7 @@ router.post("/", validateRequest(createModuleSchema), createModuleController);
 router.get("/", getAllModuleController);
 router.get("/:id", validateRequest(paramModuleSchema), getByIdModuleController);
 router.put("/:id", validateRequest(updateModuleSchema), updateModuleController);
-router.put("updateOrder/:id", validateRequest(updateModuleSchema), updateModuleOrderController);
+router.put("/updateOrder/:id", validateRequest(updateModuleSchema), updateModuleOrderController);
 router.delete(
   "/:id",
   validateRequest(paramModuleSchema),

@@ -20,6 +20,8 @@ import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerT
 import { PtoManagementRoutes } from "./routes/ptoManagement.route";
 import { moduleRouter } from "./routes/module.routes";
 import { departmentRoutes } from "./routes/department.routes";
+import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
+
 const app = express();
 
 // Apply general rate limiting
@@ -36,8 +38,8 @@ app.use(
       ENV.ORIGIN_PROD,
       ENV.ORIGIN_LOCAL, // optional if you want local dev too
     ],
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
@@ -72,6 +74,8 @@ app.use("/api/ptoManagement", PtoManagementRoutes);
 app.use("/api/module", moduleRouter);
 
 app.use("/api/departments", departmentRoutes);
+
+app.use("/api/moduleattribute", ModuleAttributeRoutes);
 
 app.use(errorMiddleware);
 
