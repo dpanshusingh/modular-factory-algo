@@ -17,7 +17,7 @@ export enum moduleAttributeType {
 export interface moduleAttributeInput {
   id: string;
   name: string;
-  moduleType: moduleAttributeType;
+  moduleAttributeType: moduleAttributeType;
 }
 
 export const createModuleAttribute = async (
@@ -43,7 +43,7 @@ export const createModuleAttribute = async (
     variables: {
       id: input.id,
       name: input.name,
-      moduleAttributeType: input.moduleType, // "number" | "boolean"
+      moduleAttributeType: input.moduleAttributeType, // "number" | "boolean"
     },
   });
 
@@ -111,7 +111,7 @@ export const UpdateModuleAttribute = async (
         data: {
           ${input.name !== undefined ? "name: $name" : ""}
           ${
-            input.moduleType !== undefined
+            input.moduleAttributeType !== undefined
               ? "moduleAttributeType: $moduleAttributeType"
               : ""
           }
@@ -124,7 +124,7 @@ export const UpdateModuleAttribute = async (
     variables: {
       id,
       name: input.name,
-      moduleAttributeType: input.moduleType,
+      moduleAttributeType: input.moduleAttributeType,
     },
   });
 

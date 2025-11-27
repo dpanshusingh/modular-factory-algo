@@ -21,7 +21,7 @@ export const createModuleAttributeController = async (
     const moduleAttribute = await createModuleAttribute({
       id,
       name,
-      moduleType: moduleAttributeType,
+      moduleAttributeType: moduleAttributeType,
     });
 
     res.status(201).json({
