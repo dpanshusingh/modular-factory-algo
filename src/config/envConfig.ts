@@ -51,4 +51,13 @@ export const ENV = {
     region: process.env.FIREBASE_REGION,
     connectionId: process.env.FIREBASE_DATACONNECT_CONNECTION_ID,
   },
+
+  // LLM Configuration
+  LLM_PROVIDER: process.env.LLM_PROVIDER,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+  GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+  LLM_MODEL: process.env.LLM_MODEL,
+  LLM_TEMPERATURE: process.env.LLM_TEMPERATURE,
+  LLM_MAX_TOKENS: process.env.LLM_MAX_TOKENS
 };
