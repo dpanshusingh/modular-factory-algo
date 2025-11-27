@@ -144,3 +144,6 @@ dataconnect/.dataconnect/
 
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Git,Node,Firebase,express,pg
+
+# documents for RAG
+vos-backend/data/hr-docs
