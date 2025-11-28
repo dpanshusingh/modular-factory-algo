@@ -21,6 +21,8 @@ import { PtoManagementRoutes } from "./routes/ptoManagement.route";
 import { moduleRouter } from "./routes/module.routes";
 import { departmentRoutes } from "./routes/department.routes";
 import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
+import { taskTemplateModuleAttributeRoutes } from "./routes/taskTemplateModuleAttribute.routes";
+import { moduleProfileModuleAttributeRoutes } from "./routes/moduleProfileModuleAttribute.routes";
 
 const app = express();
 
@@ -76,6 +78,13 @@ app.use("/api/module", moduleRouter);
 app.use("/api/departments", departmentRoutes);
 
 app.use("/api/moduleattribute", ModuleAttributeRoutes);
+
+app.use("/api/taskTemplateModuleAttribute", taskTemplateModuleAttributeRoutes);
+
+app.use(
+  "/api/moduleProfileModuleAttribute",
+  moduleProfileModuleAttributeRoutes
+);
 
 app.use(errorMiddleware);
 

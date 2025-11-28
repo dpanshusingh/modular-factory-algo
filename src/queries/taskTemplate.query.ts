@@ -25,24 +25,6 @@ export type LeadType =
   | "shipping"
   | "walls";
 
-export type ModuleCharacteristicType =
-  | "squareFeet"
-  | "linearFeetExteriorWalls"
-  | "linearFeetInteriorWalls"
-  | "countInteriorWalls"
-  | "countToilets"
-  | "countSinks"
-  | "countWindows"
-  | "countExteriorDoors"
-  | "countInteriorDoors"
-  | "squareFeetExteriorCloseUp"
-  | "squareFeetRoofing"
-  | "linearFeetCabinets"
-  | "countElectricalTerminals"
-  | "linearFeetFirewall"
-  | "countStairs"
-  | "hasHvacDucting";
-
 export type Skill =
   | "framing"
   | "finishCarpentry"
@@ -66,7 +48,6 @@ export interface TaskTemplateInput {
   leadType: LeadType;
   maxWorkers: Int;
   minWorkers: Int;
-  moduleCharacteristicType: ModuleCharacteristicType;
   name: string;
   order: Int;
   rankedSkills: Skill[];
@@ -82,7 +63,6 @@ export const createTaskTemplate = async (input: TaskTemplateInput) => {
       $departmentId: String!
       $maxWorkers: Int!
       $minWorkers: Int!
-      $moduleCharacteristicType: ModuleCharacteristicType!
       $name: String!
       $order: Int!
       $rankedSkills: [Skill!]
@@ -98,7 +78,6 @@ export const createTaskTemplate = async (input: TaskTemplateInput) => {
           departmentId: $departmentId
           maxWorkers: $maxWorkers
           minWorkers: $minWorkers
-          moduleCharacteristicType: $moduleCharacteristicType
           name: $name
           order: $order
           rankedSkills: $rankedSkills
@@ -130,7 +109,6 @@ export const getAllTaskTemplates = async () => {
         description
         department{id name}
         prerequisiteTaskTemplateId
-        moduleCharacteristicType
         name
         order
         rankedSkills
@@ -158,7 +136,6 @@ export const getTaskTemplateById = async (id: string) => {
         isVideoRequired
         maxWorkers
         minWorkers
-        moduleCharacteristicType
         name
         order
         rankedSkills
@@ -178,6 +155,19 @@ export const getTaskTemplateById = async (id: string) => {
   return response.data;
 };
 
+export const countTaskTemplate = async () => {
+  const query = `
+    query CountTaskTemplates {
+      taskTemplates {
+        _count
+      }
+    }
+  `;
+  const response = await dataConnect.executeGraphql(query, {});
+  const count = (response.data as any)?.taskTemplates?.[0]?._count ?? 0;
+  return count;
+};
+
 // Update
 export const updateTaskTemplate = async (
   id: string,
@@ -191,7 +181,6 @@ mutation UpdateTaskTemplate(
       $departmentId: String!
       $maxWorkers: Int!
       $minWorkers: Int!
-      $moduleCharacteristicType: ModuleCharacteristicType!
       $name: String!
       $order: Int!
       $rankedSkills: [Skill!]
@@ -208,7 +197,6 @@ mutation UpdateTaskTemplate(
           departmentId: $departmentId
           maxWorkers: $maxWorkers
           minWorkers: $minWorkers
-          moduleCharacteristicType: $moduleCharacteristicType
           name: $name
           order: $order
           rankedSkills: $rankedSkills

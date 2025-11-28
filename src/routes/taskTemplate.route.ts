@@ -8,7 +8,7 @@ import { createTaskTemplateSchema, deleteTaskTemplateSchema, updateTaskTemplateS
 const router = Router()
 
 router.use(apiLimiter)
-router.use(authenticateToken)
+//router.use(authenticateToken)
 
 router.post("/", validateRequest(createTaskTemplateSchema) , createTaskTemplateController)
 router.get("/", getAllTaskTemplatesController)

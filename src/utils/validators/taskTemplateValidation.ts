@@ -67,14 +67,8 @@ export const createTaskTemplateSchema = yup.object({
       .number()
       .integer("minWorkers must be an integer")
       .required("minWorkers is required"),
-    moduleCharacteristicType: yup
-      .mixed<(typeof moduleCharacteristicTypes)[number]>()
-      .oneOf(moduleCharacteristicTypes)
-      .required("moduleCharacteristicType is required"),
     name: yup.string().required("name is required"),
-    order: yup
-      .number()
-      .integer("order must be an integer"),
+    order: yup.number().integer("order must be an integer"),
     rankedSkills: yup
       .array()
       .of(yup.mixed<(typeof skills)[number]>().oneOf(skills))
@@ -84,7 +78,7 @@ export const createTaskTemplateSchema = yup.object({
       .uuid("Invalid stationId")
       .required("stationId is required"),
     description: yup.string(),
-    prerequisiteTaskTemplateId: yup.string(),
+    prerequisiteTaskTemplateId: yup.string().nullable(),
   }),
 });
 
