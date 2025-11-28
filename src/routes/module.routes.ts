@@ -11,6 +11,7 @@ import { validateRequest } from "../middlewares/validateRequest";
 import {
   createModuleSchema,
   updateModuleSchema,
+  updateOrderModuleSchema,
   paramModuleSchema,
 } from "../utils/validators/moduleValidator";
 import { apiLimiter } from "./../middlewares/rateLimiter";
@@ -25,7 +26,11 @@ router.post("/", validateRequest(createModuleSchema), createModuleController);
 router.get("/", getAllModuleController);
 router.get("/:id", validateRequest(paramModuleSchema), getByIdModuleController);
 router.put("/:id", validateRequest(updateModuleSchema), updateModuleController);
-router.put("/updateOrder/:id", validateRequest(updateModuleSchema), updateModuleOrderController);
+router.put(
+  "/updateorder/:id",
+  validateRequest(updateOrderModuleSchema),
+  updateModuleOrderController
+);
 router.delete(
   "/:id",
   validateRequest(paramModuleSchema),

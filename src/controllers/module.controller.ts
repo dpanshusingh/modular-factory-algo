@@ -130,30 +130,49 @@ export const updateModuleController = async (req: Request, res: Response) => {
 };
 
 // Update module order
+
+interface Module {
+  id: string;
+  order: number;
+}
+
 export const updateModuleOrderController = async (
   req: Request,
   res: Response
 ) => {
+  const { id } = req.params;
+  const { oldOrder, newOrder } = req.body;
+
+  const list: Module[] = await getAllModule();
+  const updates: { id: string; order: number }[] = [];
+
+  let between: Module[] = [];
+
+  if (oldOrder < newOrder) {
+    between = list.filter(
+      (x: Module) => x.order > oldOrder && x.order <= newOrder
+    );
+    between.forEach((x: Module) =>
+      updates.push({ id: x.id, order: x.order - 1 })
+    );
+  } else {
+    between = list.filter(
+      (x: Module) => x.order >= newOrder && x.order < oldOrder
+    );
+    between.forEach((x: Module) =>
+      updates.push({ id: x.id, order: x.order + 1 })
+    );
+  }
+  updates.push({ id, order: newOrder });
   try {
-    const { id } = req.params;
+    await Promise.all(
+      updates.map((item) => UpdateModuleOrder(item.id, item.order))
+    );
 
-    // Body may contain only "order"
-    const updatePayload: any = {};
-
-    if (req.body.order !== undefined) updatePayload.order = req.body.order;
-
-    await UpdateModuleOrder(id, updatePayload);
-
-    const updatedModule = await GetByIdModule(id);
-
-    res.status(200).json({
-      success: true,
-      message: "Module updated successfully",
-      data: updatedModule,
-    });
-  } catch (error: any) {
-    console.error("update module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to reorder Module" });
   }
 };
 
