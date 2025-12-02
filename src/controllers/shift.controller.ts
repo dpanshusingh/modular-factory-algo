@@ -9,6 +9,7 @@ import {
   updateShift,
   updateShiftWeek,
   deleteShift,
+  getAllShiftsWithWorkersCount,
 } from "../queries/shift.query";
 
 // Create Shift
@@ -38,7 +39,10 @@ export const createShiftController = async (req: Request, res: Response) => {
 };
 
 // Create Shift
-export const updateShiftWeekController = async (req: Request, res: Response) => {
+export const updateShiftWeekController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { id, weekdayOrdinals } = req.body;
 
@@ -58,11 +62,25 @@ export const updateShiftWeekController = async (req: Request, res: Response) => 
   }
 };
 
-
 // Get All shifts
 export const getAllShiftsController = async (_req: Request, res: Response) => {
   try {
     const shifts = await getAllShifts();
+    res.status(200).json({
+      success: true,
+      data: { shifts: shifts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllShiftsWithWorkersCountController = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const shifts = await getAllShiftsWithWorkersCount();
     res.status(200).json({
       success: true,
       data: { shifts: shifts },

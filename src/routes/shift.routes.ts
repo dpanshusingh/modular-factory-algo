@@ -8,6 +8,7 @@ import {
   updateShiftController,
   getAllShiftsNameController,
   updateShiftWeekController,
+  getAllShiftsWithWorkersCountController,
 } from "../controllers/shift.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -21,12 +22,13 @@ import {
 const router = Router();
 
 router.use(apiLimiter);
-//router.use(authenticateToken);
+router.use(authenticateToken);
 
 router.post("/", validateRequest(createShiftSchema), createShiftController);
 router.get("/", getAllShiftsController);
 router.get("/shiftName", getAllShiftsNameController);
 router.put("/updateWeek", updateShiftWeekController);
+router.get("/count", getAllShiftsWithWorkersCountController);
 
 router.get("/:id", validateRequest(getShiftByIdSchema), getShiftByIDController);
 router.put("/:id", validateRequest(updateShiftSchema), updateShiftController);

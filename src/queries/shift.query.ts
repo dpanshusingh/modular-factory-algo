@@ -99,8 +99,6 @@ export const getAllShifts = async () => {
         startTime
         endTime
         lunchStartTime
-        lunchEndTime
-        weekdayOrdinals
       }
     }
   `;
@@ -111,6 +109,50 @@ export const getAllShifts = async () => {
   >(query);
 
   return response.data?.shifts ?? [];
+};
+
+export const getAllShiftsWithWorkersCount = async () => {
+  // 1. Get all shifts
+  const shifts = await getAllShifts();
+
+  // 2. Prepare GraphQL query for worker count
+  const query = `
+    query GetWorkersCount($id: String!) {
+      workers(
+        where: {
+          shift: { id: { eq: $id } }
+        }
+      ) {
+        _count
+      }
+    }
+  `;
+
+  const results = [];
+
+  // 3. Loop through each shift and fetch workers count
+  for (const shift of shifts) {
+    const response = await dataConnect.executeGraphql<
+      { workers: { _count: number }[] },
+      { id: string }
+    >(query, {
+      variables: { id: shift.id },
+    });
+
+    const workersCount = response.data?.workers[0]?._count ?? 0;
+
+    // 4. Merge count into shift object
+    results.push({
+      id: shift.id,
+      name: shift.name,
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      lunchStartTime: shift.lunchStartTime,
+      workersCount,
+    });
+  }
+
+  return results;
 };
 
 // Read one
@@ -139,7 +181,10 @@ export const getShiftById = async (id: string) => {
   return response.data?.shift ?? null;
 };
 
-export const updateShift = async (id: string, input: Partial<ShiftUpdateInput>) => {
+export const updateShift = async (
+  id: string,
+  input: Partial<ShiftUpdateInput>
+) => {
   const query = `
     mutation UpdateShift(
       $id: String!, 
@@ -184,7 +229,6 @@ export const updateShift = async (id: string, input: Partial<ShiftUpdateInput>) 
 
   return response.data?.shift_update ?? [];
 };
-
 
 // Delete
 export const deleteShift = async (id: string) => {
