@@ -278,3 +278,25 @@ type TravelerTemplateTaskTemplate @table(name: "traveler_template_task_template"
   travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_ttt_trv")
   taskTemplate: TaskTemplate! @ref(constraintName: "fk_ttt_tmp")
 }
+
+# =====================
+# Chat System
+# =====================
+
+type ChatSession @table {
+  id: String!
+  userId: String
+  metadata: String # JSON string
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  expiresAt: Timestamp!
+}
+
+type ChatMessage @table {
+  id: String!
+  session: ChatSession!
+  sessionId: String!
+  role: String! # 'user' or 'assistant'
+  content: String!
+  timestamp: Timestamp!
+}

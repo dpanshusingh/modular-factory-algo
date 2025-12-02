@@ -145,5 +145,12 @@ dataconnect/.dataconnect/
 
 # End of https://mrkandreev.name/snippets/gitignore-generator/#Git,Node,Firebase,express,pg
 
+# macOS system files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
 # documents for RAG
 data/
