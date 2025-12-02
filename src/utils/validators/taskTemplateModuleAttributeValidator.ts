@@ -43,3 +43,9 @@ export const deletetaskTemplateModuleAttributeSchema = yup.object({
     id: yup.string().required("Task Template Module Attribute ID is required"),
   }),
 });
+
+export const gettaskTemplateModuleAttributeByTaskTemplateIdSchema = yup.object({
+  params: yup.object({
+    id: yup.string().required("Task Template ID is required"),
+  }),
+});

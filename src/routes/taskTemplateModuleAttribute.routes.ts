@@ -8,18 +8,20 @@ import {
   getAllTaskTemplateModuleAttributesController,
   getTaskTemplateModuleAttributeByIdController,
   updateTaskTemplateModuleAttributeController,
+  getTaskTemplateModuleAttributeByTaskTemplateIdController,
 } from "../controllers/taskTemplateModuleAttribute.controller";
 import {
   createtaskTemplateModuleAttributeSchema,
   deletetaskTemplateModuleAttributeSchema,
   gettaskTemplateModuleAttributeIdSchema,
   updatetaskTemplateModuleAttributeSchema,
+  gettaskTemplateModuleAttributeByTaskTemplateIdSchema,
 } from "../utils/validators/taskTemplateModuleAttributeValidator";
 
 const router = Router();
 
 router.use(apiLimiter);
-router.use(authenticateToken);
+//router.use(authenticateToken);
 
 // Create
 router.post(
@@ -36,6 +38,13 @@ router.get(
   "/:id",
   validateRequest(gettaskTemplateModuleAttributeIdSchema),
   getTaskTemplateModuleAttributeByIdController
+);
+
+// Read by TaskTemplateId
+router.get(
+  "/taskTemplate/:id",
+  validateRequest(gettaskTemplateModuleAttributeByTaskTemplateIdSchema),
+  getTaskTemplateModuleAttributeByTaskTemplateIdController
 );
 
 // Update

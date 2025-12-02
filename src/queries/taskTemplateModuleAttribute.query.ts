@@ -32,6 +32,36 @@ export const createTaskTemplateModuleAttribute = async (
   return response.data;
 };
 
+export const getAllWithTaskTemplates = async (taskTemplateId: string) => {
+  if (!taskTemplateId) {
+    throw new Error("taskTemplateId is required but was missing/undefined");
+  }
+
+  const query = `
+    query CountTaskTemplates($taskTemplateId: String!) {
+      taskTemplateModuleAttributes(
+        where: { taskTemplate: { id: { eq: $taskTemplateId } } }
+      ) {
+        id
+        moduleAttribute{
+          id
+          name
+          moduleAttributeType
+        }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { taskTemplateModuleAttributes: { id: string }[] },
+    { taskTemplateId: string }
+  >(query, {
+    variables: { taskTemplateId: taskTemplateId }, // explicit
+  });
+
+  return response.data?.taskTemplateModuleAttributes ?? [];
+};
+
 // Read all
 export const getAllTaskTemplateModuleAttributes = async () => {
   const query = `

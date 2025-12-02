@@ -93,12 +93,7 @@ export const updateTaskTemplateSchema = yup.object({
     departmentId: yup.string().required("Department Id is required"),
     maxWorkers: yup.number().integer().required(),
     minWorkers: yup.number().integer().required(),
-    moduleCharacteristicType: yup
-      .mixed<(typeof moduleCharacteristicTypes)[number]>()
-      .oneOf(moduleCharacteristicTypes)
-      .required(),
     name: yup.string().required(),
-    order: yup.number().integer().required(),
     rankedSkills: yup
       .array()
       .of(yup.mixed<(typeof skills)[number]>().oneOf(skills))
@@ -106,6 +101,16 @@ export const updateTaskTemplateSchema = yup.object({
     stationId: yup.string().uuid().required(),
     description: yup.string(),
     prerequisiteTaskTemplateId: yup.string(),
+  }),
+});
+
+export const updateOrderTaskTemplateSchema = yup.object({
+  params: yup.object({
+    id: yup.string().uuid("Invalid ID").required("TaskTemplate ID is required"),
+  }),
+  body: yup.object({
+    oldOrder: yup.number().integer().required(),
+    newOrder: yup.number().integer().required(),
   }),
 });
 
