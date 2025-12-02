@@ -4,6 +4,8 @@ import {
   getAllTaskTemplates,
   getTaskTemplateById,
   TaskTemplateInput,
+  updateTaskTemplateOrder,
+  getTaskTemplatesGroupedByStation,
   updateTaskTemplate,
   countTaskTemplate,
 } from "./../queries/taskTemplate.query";
@@ -18,7 +20,8 @@ export const createTaskTemplateController = async (
 ) => {
   try {
     const id = uuidv4();
-    const order = (await countTaskTemplate()) + 1;
+    const { stationId } = req.body;
+    const order = (await countTaskTemplate(stationId)) + 1;
     const input = { ...req.body, id, order };
 
     const taskTemplate = await createTaskTemplate(input);
@@ -33,6 +36,7 @@ export const createTaskTemplateController = async (
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 
 // Get All Task Templates
 export const getAllTaskTemplatesController = async (
@@ -78,7 +82,107 @@ export const updateTaskTemplateController = async (
   }
 };
 
+export const getAllTaskTemplatesGroupedController = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const taskTemplates = await getTaskTemplatesGroupedByStation();
+    res.status(201).json(taskTemplates);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+interface TaskTemplate {
+  id: string;
+  order: number;
+}
+
+export const updateTaskTemplateOrderController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
+  const { oldOrder, newOrder } = req.body;
+
+  const grouped = (await getTaskTemplatesGroupedByStation()) as Record<
+    string,
+    TaskTemplate[]
+  >;
+
+  // 👇 Flatten all station groups into one array
+  const list: TaskTemplate[] = Object.values(grouped).flat();
+
+  const updates: { id: string; order: number }[] = [];
+  let between: TaskTemplate[] = [];
+
+  if (oldOrder < newOrder) {
+    between = list.filter((x) => x.order > oldOrder && x.order <= newOrder);
+
+    between.forEach((x) => updates.push({ id: x.id, order: x.order - 1 }));
+  } else {
+    between = list.filter((x) => x.order >= newOrder && x.order < oldOrder);
+
+    between.forEach((x) => updates.push({ id: x.id, order: x.order + 1 }));
+  }
+
+  updates.push({ id, order: newOrder });
+
+  try {
+    await Promise.all(
+      updates.map((item) => updateTaskTemplateOrder(item.id, item.order))
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to reorder Station" });
+  }
+};
+
+// export const updateStationOrderController = async (
+//   req: Request,
+//   res: Response
+// ) => {
+//   const {id} = req.params;
+//   const { oldOrder, newOrder } = req.body;
+
+//   const list: TaskTemplate[] = await getTaskTemplatesGroupedByStation();
+//   const updates: { id: string; order: number }[] = [];
+
+//   let between: TaskTemplate[] = [];
+
+//   if (oldOrder < newOrder) {
+//     between = list.filter(
+//       (x: TaskTemplate) => x.order > oldOrder && x.order <= newOrder
+//     );
+//     between.forEach((x: TaskTemplate) =>
+//       updates.push({ id: x.id, order: x.order - 1 })
+//     );
+//   } else {
+//     between = list.filter(
+//       (x: TaskTemplate) => x.order >= newOrder && x.order < oldOrder
+//     );
+//     between.forEach((x: TaskTemplate) =>
+//       updates.push({ id: x.id, order: x.order + 1 })
+//     );
+//   }
+//   updates.push({ id, order: newOrder });
+//   try {
+//     await Promise.all(
+//       updates.map((item) => updateTaskTemplateOrder(item.id, item.order))
+//     );
+
+//     res.json({ success: true });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to reorder Station" });
+//   }
+// };
+
 // Delete Task Template
+
 export const deleteTaskTemplateController = async (
   req: Request,
   res: Response

@@ -126,6 +126,59 @@ export const getAllTaskTemplates = async () => {
   return response.data ?? [];
 };
 
+export const getTaskTemplatesGroupedByStation = async () => {
+  const query = `
+    query GetTaskTemplates {
+      taskTemplates(
+        orderBy: [
+          { station: { order: ASC } }
+          { order: ASC }
+        ]
+      ) {
+        id
+        isPhotoRequired
+        isVideoRequired
+        maxWorkers
+        minWorkers
+        name
+        order
+        rankedSkills
+        station { 
+          id
+          name
+          order
+          doesReceiveTravelers
+          inspectionArea { 
+            id 
+            name 
+            order
+          }
+        }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query);
+
+  // Cast the data to a string-indexed object
+  const data = response.data as Record<string, any[]>;
+
+  // Get first key returned from GraphQL
+  const rootKey = Object.keys(data)[0];
+
+  const templates = data[rootKey] || [];
+
+  // Group by station.id
+  const grouped = templates.reduce((acc: any, item: any) => {
+    const stationId = item.station.id;
+    if (!acc[stationId]) acc[stationId] = [];
+    acc[stationId].push(item);
+    return acc;
+  }, {});
+
+  return grouped;
+};
+
 // Read one
 export const getTaskTemplateById = async (id: string) => {
   const query = `
@@ -155,17 +208,31 @@ export const getTaskTemplateById = async (id: string) => {
   return response.data;
 };
 
-export const countTaskTemplate = async () => {
+
+export const countTaskTemplate = async (stationId: string) => {
+  if (!stationId) {
+    throw new Error("stationId is required but was missing/undefined");
+  }
+
   const query = `
-    query CountTaskTemplates {
-      taskTemplates {
-        _count
+    query CountTaskTemplates($stationId: String!) {
+      taskTemplates(
+        where: { station: { id: { eq: $stationId } } }
+      ) {
+        id
       }
     }
   `;
-  const response = await dataConnect.executeGraphql(query, {});
-  const count = (response.data as any)?.taskTemplates?.[0]?._count ?? 0;
-  return count;
+
+
+  const response = await dataConnect.executeGraphql<
+    { taskTemplates: { id: string }[] },
+    { stationId: string }
+  >(query, {
+    variables: { stationId: stationId }, // explicit
+  });
+
+  return response.data?.taskTemplates.length ?? 0;
 };
 
 // Update
@@ -182,7 +249,6 @@ mutation UpdateTaskTemplate(
       $maxWorkers: Int!
       $minWorkers: Int!
       $name: String!
-      $order: Int!
       $rankedSkills: [Skill!]
       $stationId: String!
       $description:String
@@ -198,7 +264,6 @@ mutation UpdateTaskTemplate(
           maxWorkers: $maxWorkers
           minWorkers: $minWorkers
           name: $name
-          order: $order
           rankedSkills: $rankedSkills
           station: { id: $stationId }
           description:$description
@@ -213,6 +278,21 @@ mutation UpdateTaskTemplate(
   });
 
   return response.data;
+};
+
+export const updateTaskTemplateOrder = async (id: string, order: number) => {
+  const query = `
+  mutation UpdateTaskTemplate($id: String!, $order: Int!) {
+    taskTemplate_update(
+      key: { id: $id }
+      data: { order: $order }
+    )
+  }
+`;
+  const response = await dataConnect.executeGraphql(query, {
+    variables: { id, order },
+  });
+  return response.data ?? null;
 };
 
 // Delete

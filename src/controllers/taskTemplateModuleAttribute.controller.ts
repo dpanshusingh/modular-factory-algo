@@ -5,6 +5,7 @@ import {
   deleteTaskTemplateModuleAttribute,
   getAllTaskTemplateModuleAttributes,
   getTaskTemplateModuleAttributeById,
+  getAllWithTaskTemplates,
   updateTaskTemplateModuleAttribute,
 } from "../queries/taskTemplateModuleAttribute.query";
 
@@ -56,6 +57,24 @@ export const getTaskTemplateModuleAttributeByIdController = async (
     res.status(200).json({
       success: true,
       message: "TaskTemplateModuleAttribute retrieved successfully",
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Read by id
+export const getTaskTemplateModuleAttributeByTaskTemplateIdController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = req.params.id;
+    const data = await getAllWithTaskTemplates(id);
+    res.status(200).json({
+      success: true,
+      message: "TaskTemplateModuleAttribute By TaskTemplateId retrieved successfully",
       data: data,
     });
   } catch (error: any) {

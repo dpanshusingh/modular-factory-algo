@@ -23,6 +23,7 @@ import { departmentRoutes } from "./routes/department.routes";
 import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
 import { taskTemplateModuleAttributeRoutes } from "./routes/taskTemplateModuleAttribute.routes";
 import { moduleProfileModuleAttributeRoutes } from "./routes/moduleProfileModuleAttribute.routes";
+import { shiftRoutes } from "./routes/shift.routes";
 
 const app = express();
 
@@ -85,6 +86,8 @@ app.use(
   "/api/moduleProfileModuleAttribute",
   moduleProfileModuleAttributeRoutes
 );
+
+app.use("/api/shifts", shiftRoutes);
 
 app.use(errorMiddleware);
 
