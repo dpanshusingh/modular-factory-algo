@@ -8,7 +8,7 @@ import {
   addMessageToSession,
   getConversationHistory,
   formatConversationHistory,
-} from "../services/rag/session-manager";
+} from "../services/rag/session-manager-dataconnect";
 import { getLLMConfig, createLLM } from "../config/llmConfig";
 
 const RETRIEVAL_TOP_K = parseInt(process.env.RETRIEVAL_TOP_K || "5", 10);
