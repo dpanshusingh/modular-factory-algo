@@ -15,7 +15,7 @@ export interface LLMConfig {
 export const getLLMConfig = (): LLMConfig => {
   const provider = (ENV.LLM_PROVIDER as LLMProvider) || "openai";
   const model = ENV.LLM_MODEL || "gpt-5-mini";
-  const temperature = parseFloat(ENV.LLM_TEMPERATURE || "0.7");
+  const temperature = parseFloat(ENV.LLM_TEMPERATURE || "1");
   const maxTokens = parseInt(ENV.LLM_MAX_TOKENS || "1500", 10);
 
   return {

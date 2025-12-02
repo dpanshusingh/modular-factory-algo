@@ -20,6 +20,7 @@ import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerT
 import { PtoManagementRoutes } from "./routes/ptoManagement.route";
 import { moduleRouter } from "./routes/module.routes";
 import { departmentRoutes } from "./routes/department.routes";
+import { chatRoutes } from "./routes/chatRoutes";
 const app = express();
 
 // Apply general rate limiting
@@ -68,6 +69,7 @@ app.use("/api/ptoManagement", PtoManagementRoutes);
 app.use("/api/module", moduleRouter);
 
 app.use("/api/departments", departmentRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.use(errorMiddleware);
 
