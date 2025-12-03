@@ -35,6 +35,32 @@ export const createModuleProfileModuleAttribute = async (
   return response.data;
 };
 
+export const getDataWithModuleProfile = async (moduleProfileId: string) => {
+  const query = `
+    query CountModuleProfiles($moduleProfileId: String!) {
+      moduleProfileModuleAttributes(
+        where: { moduleProfile: { id: { eq: $moduleProfileId } } }
+      ) {
+        id
+        moduleAttribute{
+          id
+          name
+          moduleAttributeType
+        }
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { moduleProfileModuleAttributes: { id: string }[] },
+    { moduleProfileId: string }
+  >(query, {
+    variables: { moduleProfileId: moduleProfileId },
+  });
+
+  return response.data?.moduleProfileModuleAttributes ?? [];
+};
+
 // Read all
 export const getAllModuleProfileModuleAttributes = async () => {
   const query = `
