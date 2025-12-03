@@ -20,7 +20,7 @@ import {
 // Create Shift
 export const createShiftController = async (req: Request, res: Response) => {
   try {
-    const { name, startTime, endTime, lunchStartTime, lunchEndTime } = req.body;
+    const { name, startTime, endTime, lunchStartTime, lunchEndTime, weekdayOrdinals } = req.body;
     const id = uuidv4();
 
     const station = await createShift({
@@ -30,6 +30,7 @@ export const createShiftController = async (req: Request, res: Response) => {
       endTime,
       lunchStartTime,
       lunchEndTime,
+      weekdayOrdinals,
     });
 
     res.status(201).json({
@@ -89,7 +90,8 @@ export const updateShiftWeekController = async (
   res: Response
 ) => {
   try {
-    const { id, weekdayOrdinals } = req.body;
+    const { weekdayOrdinals } = req.body;
+    const { id } = req.params;
 
     const station = await updateShiftWeek({
       id,
@@ -112,7 +114,8 @@ export const deleteShiftWeekController = async (
   res: Response
 ) => {
   try {
-    const { id, weekdayOrdinals } = req.body;
+    const { id } = req.params;
+    const { weekdayOrdinals } = req.body;
 
     const station = await deleteShiftWeek({
       id,
