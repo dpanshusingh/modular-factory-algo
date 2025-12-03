@@ -18,6 +18,11 @@ export interface ShiftInput {
   lunchEndTime: number;
 }
 
+export interface ShiftWorkerInput {
+  id: string;
+  shiftId: string;
+}
+
 export interface ShiftUpdateInput {
   id: string;
   name: string;
@@ -35,7 +40,7 @@ export interface ShiftWeekInput {
 // Create
 export const createShift = async (input: ShiftInput & { id: string }) => {
   const query = `
-    mutation CreateShift($id: String!, $name: String!, $startTime: Float!, $endTime: Float!, $lunchStartTime: Float!, $lunchEndTime: Float!) {
+    mutation CreateShift($id: String!, $name: String!, $startTime: Timestamp!, $endTime: Timestamp!, $lunchStartTime: Timestamp!, $lunchEndTime: Timestamp!) {
       shift_insert(data: { id: $id, name: $name, startTime: $startTime, endTime: $endTime, lunchStartTime: $lunchStartTime, lunchEndTime: $lunchEndTime })
     }
   `;
@@ -44,6 +49,63 @@ export const createShift = async (input: ShiftInput & { id: string }) => {
   });
 
   return response.data;
+};
+
+
+export const updateWorkerShiftId = async (
+  input: ShiftWorkerInput & { id: string; shiftId: string }
+) => {
+  const query = `
+    mutation UpdateWorkerShiftId($id: String!, $shiftId: String!) {
+      worker_update(id: $id, data: { shiftId: $shiftId })
+    }
+  `;
+  const response = await dataConnect.executeGraphql<
+    { worker_update: { id: string; shiftId: string } },
+    { id: string; shiftId: string }
+  >(query, {
+    variables: { id: input.id, shiftId: input.shiftId },
+  });
+
+  return response.data;
+};
+
+export const getAllUnavailableWorkers = async () => {
+  const query = `
+    query GetAllWorkers {
+      workers (where: { shiftId: { isNull: false } } ) {
+        id
+        firstName
+        lastName
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { workers: { id: string; firstName: string; lastName: string }[] },
+    {}
+  >(query);
+
+  return response.data?.workers ?? [];
+};
+
+export const getAllAvailableWorkers = async () => {
+  const query = `
+    query GetAllAvailableWorkers {
+      workers(where: { shiftId: { isNull: true } }) {
+        id
+        firstName
+        lastName
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { workers: { id: string; firstName: string; lastName: string }[] },
+    {}
+  >(query);
+
+  return response.data?.workers ?? [];
 };
 
 export const updateShiftWeek = async (
@@ -181,6 +243,67 @@ export const getShiftById = async (id: string) => {
   return response.data?.shift ?? null;
 };
 
+const formatShiftWeek = (shift: any) => {
+  const result = Array(7).fill(" ");
+  shift.weekdayOrdinals.forEach((day: any) => {
+    if (day >= 1 && day <= 7) {
+      result[day - 1] = shift.name;
+    }
+  });
+
+  return result;
+};
+
+export const getAllAssignedShiftsTotheWeekDays = async () => {
+  const query = `
+    query GetAllShifts {
+      shifts {
+        id
+        name
+        weekdayOrdinals
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { shifts: { id: string; name: string; weekdayOrdinals: number[] }[] },
+    {}
+  >(query, {});
+
+  const shifts = response.data?.shifts ?? [];
+
+  // Map each shift to include the formatted array
+  return shifts.map((shift) => ({
+    ...shift,
+    weekArray: formatShiftWeek(shift),
+  }));
+};
+
+export const deleteShiftWeek = async (
+  input: ShiftWeekInput & { id: string }
+) => {
+  const query = `
+    mutation UpdateShiftWeek($id: String!, $weekdayOrdinals: [Int!]!) {
+      shift_update(
+        id: $id
+        data: { weekdayOrdinals: $weekdayOrdinals }
+      )
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql<
+    { shift_update: ShiftWeekInput },
+    ShiftWeekInput & { id: string }
+  >(query, {
+    variables: {
+      id: input.id,
+      weekdayOrdinals: input.weekdayOrdinals,
+    },
+  });
+
+  return response.data;
+};
+
 export const updateShift = async (
   id: string,
   input: Partial<ShiftUpdateInput>
@@ -189,10 +312,10 @@ export const updateShift = async (
     mutation UpdateShift(
       $id: String!, 
       $name: String, 
-      $startTime: Float, 
-      $endTime: Float, 
-      $lunchStartTime: Float, 
-      $lunchEndTime: Float, 
+      $startTime: Timestamp!, 
+      $endTime: Timestamp!, 
+      $lunchStartTime: Timestamp!, 
+      $lunchEndTime: Timestamp!, 
       $weekdayOrdinals: [Int!]
     ) {
       shift_update(

@@ -7,9 +7,14 @@ import {
   getShiftById,
   getAllShiftsName,
   updateShift,
+  getAllAssignedShiftsTotheWeekDays,
   updateShiftWeek,
   deleteShift,
   getAllShiftsWithWorkersCount,
+  getAllAvailableWorkers,
+  getAllUnavailableWorkers,
+  deleteShiftWeek,
+  updateWorkerShiftId,
 } from "../queries/shift.query";
 
 // Create Shift
@@ -38,6 +43,46 @@ export const createShiftController = async (req: Request, res: Response) => {
   }
 };
 
+export const updateWorkersShiftIdBatchController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { ids, shiftId } = req.body;
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "ids must be a non-empty array",
+      });
+    }
+
+    if (!shiftId) {
+      return res.status(400).json({
+        success: false,
+        message: "shiftId is required",
+      });
+    }
+    const updatePromises = ids.map((id: string) =>
+      updateWorkerShiftId({ id, shiftId })
+    );
+
+    const results = await Promise.all(updatePromises);
+
+    res.status(200).json({
+      success: true,
+      message: "Workers shiftId updated successfully",
+      data: results,
+    });
+  } catch (error: any) {
+    console.error("Update worker shift id batch error:", error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
 // Create Shift
 export const updateShiftWeekController = async (
   req: Request,
@@ -62,10 +107,78 @@ export const updateShiftWeekController = async (
   }
 };
 
+export const deleteShiftWeekController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id, weekdayOrdinals } = req.body;
+
+    const station = await deleteShiftWeek({
+      id,
+      weekdayOrdinals,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Shift weekdays updated successfully",
+      data: station,
+    });
+  } catch (error: any) {
+    console.error("Update shift week error:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
 // Get All shifts
 export const getAllShiftsController = async (_req: Request, res: Response) => {
   try {
     const shifts = await getAllShifts();
+    res.status(200).json({
+      success: true,
+      data: { shifts: shifts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllAssignedShiftsTotheWeekDaysController = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const shifts = await getAllAssignedShiftsTotheWeekDays();
+    res.status(200).json({
+      success: true,
+      data: { shifts: shifts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllAvailableShiftsController = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const shifts = await getAllAvailableWorkers();
+    res.status(200).json({
+      success: true,
+      data: { shifts: shifts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getAllUnAvailableShiftsController = async (
+  _req: Request,
+  res: Response
+) => {
+  try {
+    const shifts = await getAllUnavailableWorkers();
     res.status(200).json({
       success: true,
       data: { shifts: shifts },
