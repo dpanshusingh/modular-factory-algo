@@ -6,6 +6,7 @@ import {
   getAllModuleProfileModuleAttributes,
   getModuleProfileModuleAttributeById,
   updateModuleProfileModuleAttribute,
+  getDataWithModuleProfile,
 } from "../queries/moduleProfileModuleAttribute.query";
 
 // Create
@@ -62,6 +63,28 @@ export const getModuleProfileModuleAttributeByIdController = async (
       return res
         .status(404)
         .json({ error: "ModuleProfileModuleAttribute not found" });
+    }
+    res.status(200).json({
+      success: true,
+      data: data,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+export const getDataWithModuleProfileByIdController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = req.params.id;
+    const data = await getDataWithModuleProfile(id);
+    if (!data) {
+      return res.status(404).json({ error: "ModuleProfile not found" });
     }
     res.status(200).json({
       success: true,
