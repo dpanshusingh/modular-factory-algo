@@ -17,7 +17,7 @@ export const createShiftSchema = yup.object({
       .test("is-timestamp", "Invalid timestamp", value => {
         return !isNaN(Date.parse(value));
       }),
-
+      
     lunchStartTime: yup
       .string()
       .required("Lunch start time is required")
