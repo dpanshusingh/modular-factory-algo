@@ -13,7 +13,7 @@ import {
   getAllAvailableShiftsController,
   getAllUnAvailableShiftsController,
   updateWorkersShiftIdBatchController,
-  deleteShiftWeekController,
+  deleteShiftWeekController
 } from "../controllers/shift.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -27,28 +27,24 @@ import {
 const router = Router();
 
 router.use(apiLimiter);
-router.use(authenticateToken);
+//router.use(authenticateToken);
 
-router.post("/", validateRequest(createShiftSchema), createShiftController); //done
-router.get("/worker-count", getAllShiftsWithWorkersCountController); //done
-router.get(
-  "/byId/:id",
-  validateRequest(getShiftByIdSchema),
-  getShiftByIDController
-);
-router.get("/", getAllShiftsController); //done
-router.get("/assigned", getAllAssignedShiftsTotheWeekDaysController); //done
+router.post("/", validateRequest(createShiftSchema), createShiftController);
+router.get("/count", getAllShiftsWithWorkersCountController);
+router.get("/byId/:id", validateRequest(getShiftByIdSchema), getShiftByIDController);
+router.get("/", getAllShiftsController);
+router.get("/assigned", getAllAssignedShiftsTotheWeekDaysController);
 router.get("/shiftName", getAllShiftsNameController);
-router.get("/available", getAllAvailableShiftsController); //done
-router.get("/unavailable", getAllUnAvailableShiftsController); //done
-router.put("/updateWeek/:id", updateShiftWeekController); //done
+router.get("/avalible", getAllAvailableShiftsController);
+router.get("/unavalible", getAllUnAvailableShiftsController);
+router.put("/updateWeek", updateShiftWeekController);
 router.put("/updateShiftId", updateWorkersShiftIdBatchController);
-router.put("/:id", validateRequest(updateShiftSchema), updateShiftController); //done
-router.put("/deleteWeek/:id", deleteShiftWeekController); //done
+router.put("/:id", validateRequest(updateShiftSchema), updateShiftController);
+router.put("/:id", validateRequest(updateShiftSchema), deleteShiftWeekController);
 router.delete(
   "/:id",
   validateRequest(deleteShiftSchema),
   deleteShiftController
-); //done
+);
 
 export { router as shiftRoutes };

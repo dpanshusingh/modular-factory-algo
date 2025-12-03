@@ -6,7 +6,6 @@ import {
   updateModuleProfile,
   deleteModuleProfile,
 } from "../queries/moduleProfile.query";
-import { profile } from "console";
 
 const generateId = () => {
   return Math.floor(10000 + Math.random() * 90000).toString();
@@ -25,11 +24,7 @@ export const createModuleProfileController = async (
       ...input,
       id,
     });
-    res.status(201).json({
-      success: true,
-      message: "Module profile created successfully",
-      data: profile,
-    });
+    res.status(201).json(profile);
   } catch (error: any) {
     console.error(error);
     res.status(500).json({ error: error.message });
@@ -42,11 +37,7 @@ export const getAllModuleProfilesController = async (
 ) => {
   try {
     const profiles = await getAllModuleProfiles();
-    res.json({
-      success: true,
-      message: "Module profiles retrieved successfully",
-      data: profiles,
-    });
+    res.json(profiles);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -59,11 +50,7 @@ export const getModuleProfileByIdController = async (
   try {
     const profile = await getModuleProfileById(req.params.id);
     if (!profile) return res.status(404).json({ message: "Not found" });
-    res.json({
-      success: true,
-      message: "Module profile retrieved successfully",
-      data: profile,
-    });
+    res.json(profile);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -75,11 +62,7 @@ export const updateModuleProfileController = async (
 ) => {
   try {
     const profile = await updateModuleProfile(req.params.id, req.body);
-    res.json({
-      success: true,
-      message: "Module profile updated successfully",
-      data: profile,
-    });
+    res.json(profile);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -91,10 +74,7 @@ export const deleteModuleProfileController = async (
 ) => {
   try {
     await deleteModuleProfile(req.params.id);
-    res.status(204).json({
-      success: true,
-      message: "Module profile deleted successfully",
-    });
+    res.status(204).send();
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

@@ -4,13 +4,15 @@ export const createmoduleProfileModuleAttributeSchema = yup.object({
   body: yup.object({
     moduleProfileId: yup
       .string()
+      .uuid("Invalid Module Profile ID ")
       .required("Module Profile ID is required"),
     moduleAttributeId: yup
       .string()
-      .uuid("Invalid Module Attribute ID")
+      .uuid("Invalid Module Profile Module Attribute ID")
       .required("Module Profile Module Attribute ID is required"),
     value: yup
       .string()
+      .uuid("Invalid Module Profile Module Attribute Value")
       .required("Module Profile Module Attribute Value is required"),
   }),
 });
@@ -31,6 +33,7 @@ export const updatemoduleProfileModuleAttributeSchema = yup.object({
   body: yup.object({
     moduleProfileId: yup
       .string()
+      .uuid("Invalid Module Profile ID ")
       .required("Module Profile ID is required"),
     moduleAttributeId: yup
       .string()
@@ -38,6 +41,7 @@ export const updatemoduleProfileModuleAttributeSchema = yup.object({
       .required("Module Profile Module Attribute ID is required"),
     value: yup
       .string()
+      .uuid("Invalid Module Profile Module Attribute Value")
       .required("Module Profile Module Attribute Value is required"),
   }),
 });
