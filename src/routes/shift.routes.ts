@@ -8,6 +8,12 @@ import {
   updateShiftController,
   getAllShiftsNameController,
   updateShiftWeekController,
+  getAllShiftsWithWorkersCountController,
+  getAllAssignedShiftsTotheWeekDaysController,
+  getAllAvailableShiftsController,
+  getAllUnAvailableShiftsController,
+  updateWorkersShiftIdBatchController,
+  deleteShiftWeekController
 } from "../controllers/shift.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -24,13 +30,17 @@ router.use(apiLimiter);
 //router.use(authenticateToken);
 
 router.post("/", validateRequest(createShiftSchema), createShiftController);
+router.get("/count", getAllShiftsWithWorkersCountController);
+router.get("/byId/:id", validateRequest(getShiftByIdSchema), getShiftByIDController);
 router.get("/", getAllShiftsController);
+router.get("/assigned", getAllAssignedShiftsTotheWeekDaysController);
 router.get("/shiftName", getAllShiftsNameController);
+router.get("/avalible", getAllAvailableShiftsController);
+router.get("/unavalible", getAllUnAvailableShiftsController);
 router.put("/updateWeek", updateShiftWeekController);
-
-router.get("/:id", validateRequest(getShiftByIdSchema), getShiftByIDController);
+router.put("/updateShiftId", updateWorkersShiftIdBatchController);
 router.put("/:id", validateRequest(updateShiftSchema), updateShiftController);
-
+router.put("/:id", validateRequest(updateShiftSchema), deleteShiftWeekController);
 router.delete(
   "/:id",
   validateRequest(deleteShiftSchema),
