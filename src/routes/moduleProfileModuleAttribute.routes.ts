@@ -8,7 +8,6 @@ import {
   getAllModuleProfileModuleAttributesController,
   getModuleProfileModuleAttributeByIdController,
   updateModuleProfileModuleAttributeController,
-  getDataWithModuleProfileByIdController
 } from "../controllers/moduleProfileModuleAttribute.controller";
 import {
   createmoduleProfileModuleAttributeSchema,
@@ -37,11 +36,6 @@ router.get(
   "/:id",
   validateRequest(getmoduleProfileModuleAttributeIdSchema),
   getModuleProfileModuleAttributeByIdController
-);
-
-router.get(
-  "/moduleProfile/:id",
-  getDataWithModuleProfileByIdController
 );
 
 // Update

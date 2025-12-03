@@ -16,7 +16,6 @@ export interface ShiftInput {
   endTime: number;
   lunchStartTime: number;
   lunchEndTime: number;
-  weekdayOrdinals: Int[];
 }
 
 export interface ShiftWorkerInput {
@@ -41,8 +40,8 @@ export interface ShiftWeekInput {
 // Create
 export const createShift = async (input: ShiftInput & { id: string }) => {
   const query = `
-    mutation CreateShift($id: String!, $name: String!, $startTime: Timestamp!, $endTime: Timestamp!, $lunchStartTime: Timestamp!, $lunchEndTime: Timestamp!, $weekdayOrdinals: [Int!]!) {
-      shift_insert(data: { id: $id, name: $name, startTime: $startTime, endTime: $endTime, lunchStartTime: $lunchStartTime, lunchEndTime: $lunchEndTime, weekdayOrdinals: $weekdayOrdinals })
+    mutation CreateShift($id: String!, $name: String!, $startTime: Timestamp!, $endTime: Timestamp!, $lunchStartTime: Timestamp!, $lunchEndTime: Timestamp!) {
+      shift_insert(data: { id: $id, name: $name, startTime: $startTime, endTime: $endTime, lunchStartTime: $lunchStartTime, lunchEndTime: $lunchEndTime })
     }
   `;
   const response = await dataConnect.executeGraphql(query, {
@@ -51,6 +50,7 @@ export const createShift = async (input: ShiftInput & { id: string }) => {
 
   return response.data;
 };
+
 
 export const updateWorkerShiftId = async (
   input: ShiftWorkerInput & { id: string; shiftId: string }
@@ -139,7 +139,6 @@ export const getAllShiftsName = async () => {
       shifts {
         id
         name
-        weekdayOrdinals
       }
     }
   `;
@@ -244,21 +243,13 @@ export const getShiftById = async (id: string) => {
   return response.data?.shift ?? null;
 };
 
-type Shift = {
-  id: string;
-  name: string;
-  weekdayOrdinals: number[] | null;
-};
-
-const formatShiftWeek = (shift: Shift) => {
+const formatShiftWeek = (shift: any) => {
   const result = Array(7).fill(" ");
-  const days = shift.weekdayOrdinals ?? [];
-
-  for (const day of days) {
+  shift.weekdayOrdinals.forEach((day: any) => {
     if (day >= 1 && day <= 7) {
       result[day - 1] = shift.name;
     }
-  }
+  });
 
   return result;
 };
