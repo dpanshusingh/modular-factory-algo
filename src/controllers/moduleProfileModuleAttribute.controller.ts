@@ -7,6 +7,7 @@ import {
   getModuleProfileModuleAttributeById,
   updateModuleProfileModuleAttribute,
   getDataWithModuleProfile,
+  deleteDataWithModuleProfile,
 } from "../queries/moduleProfileModuleAttribute.query";
 
 // Create
@@ -94,6 +95,43 @@ export const getDataWithModuleProfileByIdController = async (
     res.status(500).json({
       success: false,
       error: error.message,
+    });
+  }
+};
+
+export const deleteDataWithModuleProfileByIdController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = req.params.id;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing moduleProfileId in request params",
+      });
+    }
+
+    const deletedCount = await deleteDataWithModuleProfile(id);
+    if (deletedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No ModuleProfileModuleAttribute found for this ID",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "ModuleProfileModuleAttributes deleted successfully",
+      deletedCount,
+    });
+  } catch (error: any) {
+    console.error("Error in delete controller:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message || "Internal Server Error",
     });
   }
 };

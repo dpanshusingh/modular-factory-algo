@@ -1,3 +1,4 @@
+import { DateString } from "@dataconnect/generated";
 import { dataConnect } from "../config/dataConnectClient";
 
 type Int = number & { __int__: void };
@@ -12,10 +13,10 @@ function toInt(n: number): Int {
 export interface ShiftInput {
   id: string;
   name: string;
-  startTime: number;
-  endTime: number;
-  lunchStartTime: number;
-  lunchEndTime: number;
+  startTime: Date;
+  endTime: Date;
+  lunchStartTime: Date;
+  lunchEndTime: Date;
   weekdayOrdinals: Int[];
 }
 
@@ -27,10 +28,10 @@ export interface ShiftWorkerInput {
 export interface ShiftUpdateInput {
   id: string;
   name: string;
-  startTime: number;
-  endTime: number;
-  lunchStartTime: number;
-  lunchEndTime: number;
+  startTime: Date;
+  endTime: Date;
+  lunchStartTime: Date;
+  lunchEndTime: Date;
   weekOrdinals?: Int[];
 }
 
@@ -52,20 +53,32 @@ export const createShift = async (input: ShiftInput & { id: string }) => {
   return response.data;
 };
 
-export const updateWorkerShiftId = async (
-  input: ShiftWorkerInput & { id: string; shiftId: string }
+export const updateWorkerShiftIdBulk = async (
+  workerIds: string[],
+  shiftId: string
 ) => {
+  if (!workerIds.length) {
+    throw new Error("workerIds array cannot be empty");
+  }
+
+  const mutations = workerIds
+    .map(
+      (id, index) => `
+        w${index}: worker_update(
+          id: "${id}",
+          data: { shiftId: "${shiftId}" }
+        )
+      `
+    )
+    .join("\n");
+
   const query = `
-    mutation UpdateWorkerShiftId($id: String!, $shiftId: String!) {
-      worker_update(id: $id, data: { shiftId: $shiftId })
+    mutation UpdateWorkerShiftIdBulk {
+      ${mutations}
     }
   `;
-  const response = await dataConnect.executeGraphql<
-    { worker_update: { id: string; shiftId: string } },
-    { id: string; shiftId: string }
-  >(query, {
-    variables: { id: input.id, shiftId: input.shiftId },
-  });
+
+  const response = await dataConnect.executeGraphql(query);
 
   return response.data;
 };
@@ -346,10 +359,10 @@ export const updateShift = async (
     {
       id: string;
       name?: string;
-      startTime?: number;
-      endTime?: number;
-      lunchStartTime?: number;
-      lunchEndTime?: number;
+      startTime?: Date;
+      endTime?: Date;
+      lunchStartTime?: Date;
+      lunchEndTime?: Date;
       weekdayOrdinals?: number[];
     }
   >(query, {

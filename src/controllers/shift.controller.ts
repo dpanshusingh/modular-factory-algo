@@ -14,13 +14,20 @@ import {
   getAllAvailableWorkers,
   getAllUnavailableWorkers,
   deleteShiftWeek,
-  updateWorkerShiftId,
+  updateWorkerShiftIdBulk,
 } from "../queries/shift.query";
 
 // Create Shift
 export const createShiftController = async (req: Request, res: Response) => {
   try {
-    const { name, startTime, endTime, lunchStartTime, lunchEndTime, weekdayOrdinals } = req.body;
+    const {
+      name,
+      startTime,
+      endTime,
+      lunchStartTime,
+      lunchEndTime,
+      weekdayOrdinals,
+    } = req.body;
     const id = uuidv4();
 
     const station = await createShift({
@@ -44,17 +51,15 @@ export const createShiftController = async (req: Request, res: Response) => {
   }
 };
 
-export const updateWorkersShiftIdBatchController = async (
-  req: Request,
-  res: Response
-) => {
-  try {
-    const { ids, shiftId } = req.body;
 
-    if (!Array.isArray(ids) || ids.length === 0) {
+export const bulkUpdateWorkerShiftIdController = async (req: Request, res: Response) => {
+  try {
+    const { workerIds, shiftId } = req.body;
+
+    if (!workerIds || !Array.isArray(workerIds) || workerIds.length === 0) {
       return res.status(400).json({
         success: false,
-        message: "ids must be a non-empty array",
+        message: "workerIds must be a non-empty array",
       });
     }
 
@@ -64,22 +69,21 @@ export const updateWorkersShiftIdBatchController = async (
         message: "shiftId is required",
       });
     }
-    const updatePromises = ids.map((id: string) =>
-      updateWorkerShiftId({ id, shiftId })
-    );
 
-    const results = await Promise.all(updatePromises);
+    const result = await updateWorkerShiftIdBulk(workerIds, shiftId);
 
-    res.status(200).json({
+   // const updatedCount = Object.keys(result).length;
+
+    return res.status(200).json({
       success: true,
-      message: "Workers shiftId updated successfully",
-      data: results,
+      message: "Workers updated successfully",
+      // updatedCount,
+      result,
     });
-  } catch (error: any) {
-    console.error("Update worker shift id batch error:", error);
+  } catch (error) {
     res.status(500).json({
       success: false,
-      error: error.message,
+      error: error instanceof Error ? error.message : "Internal Server Error",
     });
   }
 };
