@@ -8,7 +8,8 @@ import {
   getAllModuleProfileModuleAttributesController,
   getModuleProfileModuleAttributeByIdController,
   updateModuleProfileModuleAttributeController,
-  getDataWithModuleProfileByIdController
+  deleteDataWithModuleProfileByIdController,
+  getDataWithModuleProfileByIdController,
 } from "../controllers/moduleProfileModuleAttribute.controller";
 import {
   createmoduleProfileModuleAttributeSchema,
@@ -39,10 +40,7 @@ router.get(
   getModuleProfileModuleAttributeByIdController
 );
 
-router.get(
-  "/moduleProfile/:id",
-  getDataWithModuleProfileByIdController
-);
+router.get("/moduleProfile/:id", getDataWithModuleProfileByIdController);
 
 // Update
 router.put(
@@ -57,5 +55,7 @@ router.delete(
   validateRequest(deletemoduleProfileModuleAttributeSchema),
   deleteModuleProfileModuleAttributeController
 );
+
+router.delete("/moduleProfile/:id", deleteDataWithModuleProfileByIdController);
 
 export { router as moduleProfileModuleAttributeRoutes };
