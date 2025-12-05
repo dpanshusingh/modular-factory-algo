@@ -24,6 +24,7 @@ import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
 import { taskTemplateModuleAttributeRoutes } from "./routes/taskTemplateModuleAttribute.routes";
 import { moduleProfileModuleAttributeRoutes } from "./routes/moduleProfileModuleAttribute.routes";
 import { shiftRoutes } from "./routes/shift.routes";
+import { timeStudyRoutes } from "./routes/timeStudy.routes";
 
 const app = express();
 
@@ -86,6 +87,8 @@ app.use(
   "/api/moduleProfileModuleAttribute",
   moduleProfileModuleAttributeRoutes
 );
+
+app.use("/api/timeStudy", timeStudyRoutes);
 
 app.use("/api/shifts", shiftRoutes);
 

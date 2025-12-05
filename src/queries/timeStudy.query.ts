@@ -21,7 +21,7 @@ export interface TimeStudy {
 
 export interface TimeStudyInput {
   id: string;
-  moduleId: string;
+  moduleId?: string;
   taskTemplateId: string;
   notes: string;
   clockTime: Int;
@@ -40,7 +40,7 @@ export interface TimeStudyUpdateInput {
 }
 
 interface timeStudyModuleAttributeInput {
-  // timeStudyId: string;
+  timeStudyId: string;
   moduleAttributeId: string;
   value: string;
 }
@@ -50,7 +50,7 @@ export const createTimeStudy = async (
   input: TimeStudyInput & { id: string }
 ) => {
   const query = `
-    mutation CreateTimeStudy($id: String!, $moduleId: String, $taskTemplateId: String!, $notes: String!, $clockTime: Int!, $date: Date!, $workerCount: Int!) {
+    mutation CreateTimeStudy($id: String!, $moduleId: String, $taskTemplateId: String!, $notes: String!, $clockTime: Float!, $date: Timestamp!, $workerCount: Int!) {
       timeStudy_insert(data: { id: $id, moduleId: $moduleId, taskTemplateId: $taskTemplateId, notes: $notes, clockTime: $clockTime, date: $date, workerCount: $workerCount })
     }
   `;
@@ -62,30 +62,59 @@ export const createTimeStudy = async (
 };
 
 export const updateTimeStudy = async (
-  input: TimeStudyUpdateInput & { id: string }
+  id: string,
+  input: Partial<TimeStudyUpdateInput>
 ) => {
+  // Validate required fields for TS & runtime
+  if (
+    !input.taskTemplateId ||
+    !input.notes ||
+    !input.clockTime ||
+    !input.date ||
+    !input.workerCount
+  ) {
+    throw new Error("Missing required fields in TimeStudyUpdateInput");
+  }
+
+  const fullInput: TimeStudyUpdateInput = {
+    id,
+    moduleId: input.moduleId ?? "", // or keep optional if backend accepts null
+    taskTemplateId: input.taskTemplateId,
+    notes: input.notes,
+    clockTime: input.clockTime,
+    date: input.date,
+    workerCount: input.workerCount,
+  };
+
   const query = `
-    mutation UpdateTimeStudy($id: String!, $moduleId: String, $taskTemplateId: String!, $notes: String!, $clockTime: Int!, $date: Date!, $workerCount: Int!) {
+    mutation UpdateTimeStudy(u
+      $id: String!
+      $moduleId: String
+      $taskTemplateId: String!
+      $notes: String!
+      $clockTime: Int!
+      $date: Date!
+      $workerCount: Int!
+    ) {
       timeStudy_update(
         id: $id
-        data: { moduleId: $moduleId, taskTemplateId: $taskTemplateId, notes: $notes, clockTime: $clockTime, date: $date, workerCount: $workerCount }
+        data: {
+          moduleId: $moduleId
+          taskTemplateId: $taskTemplateId
+          notes: $notes
+          clockTime: $clockTime
+          date: $date
+          workerCount: $workerCount
+        }
       )
     }
   `;
 
   const response = await dataConnect.executeGraphql<
     { timeStudy_update: TimeStudyUpdateInput },
-    TimeStudyUpdateInput & { id: string }
+    TimeStudyUpdateInput
   >(query, {
-    variables: {
-      id: input.id,
-      moduleId: input.moduleId,
-      taskTemplateId: input.taskTemplateId,
-      notes: input.notes,
-      clockTime: input.clockTime,
-      date: input.date,
-      workerCount: input.workerCount,
-    },
+    variables: fullInput,
   });
 
   return response.data;
@@ -113,9 +142,11 @@ export const getTaskTemplateModuleAttributesByTaskTemplateId = async (
   taskTemplateId: string
 ) => {
   const query = `
-    query GetTaskTemplateModuleAttributesByTaskTemplateId($taskTemplateId: String!) {
+    query GetTaskTemplateModuleAttributesByTaskTemplateId(
+      $taskTemplateId: String!
+    ) {
       taskTemplateModuleAttributes(
-        where: { taskTemplate: { id: { _eq: $taskTemplateId } } }
+        where: { taskTemplateId: { eq: $taskTemplateId } }
       ) {
         id
         moduleAttribute {
@@ -130,7 +161,11 @@ export const getTaskTemplateModuleAttributesByTaskTemplateId = async (
   const response = await dataConnect.executeGraphql<
     { taskTemplateModuleAttributes: any[] },
     { taskTemplateId: string }
-  >(query, { variables: { taskTemplateId } });
+  >(query, {
+    variables: {
+      taskTemplateId: taskTemplateId, // avoid shorthand confusion
+    },
+  });
 
   return (
     response.data?.taskTemplateModuleAttributes.map((item) => ({
@@ -142,7 +177,8 @@ export const getTaskTemplateModuleAttributesByTaskTemplateId = async (
 };
 
 export const createTimeStudyModuleAttribute = async (
-  input: timeStudyModuleAttributeInput & { id: string }
+  input: timeStudyModuleAttributeInput & { id: string },
+  // taskTemplateId: string
 ) => {
   const query = `
     mutation CreateTimeStudyModuleAttribute(
@@ -169,11 +205,10 @@ export const createTimeStudyModuleAttribute = async (
   return response.data;
 };
 
-
 export const getAllTimeStudys = async () => {
   const query = `
     query GetAllTimeStudys {
-      timeStudys {
+      timeStudies {
         id
         moduleId
         taskTemplateId
@@ -201,7 +236,6 @@ export const getAllTimeStudys = async () => {
     totalLaborHours: item.clockTime * item.workerCount,
   }));
 };
-
 
 // Read one
 export const getTimeStudyById = async (id: string) => {
