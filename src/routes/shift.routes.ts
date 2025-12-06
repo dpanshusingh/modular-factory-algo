@@ -14,6 +14,7 @@ import {
   getAllUnAvailableShiftsController,
   bulkUpdateWorkerShiftIdController,
   deleteShiftWeekController,
+  getWorkersNameWithShiftIdController,
 } from "../controllers/shift.controller";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validateRequest";
@@ -39,6 +40,8 @@ router.get(
 router.get("/", getAllShiftsController); //done
 router.get("/assigned", getAllAssignedShiftsTotheWeekDaysController); //done
 router.get("/shiftName", getAllShiftsNameController);
+router.get("/workerName/:id", getWorkersNameWithShiftIdController);
+
 router.get("/available", getAllAvailableShiftsController); //done
 router.get("/unavailable", getAllUnAvailableShiftsController); //done
 router.put("/updateWeek/:id", updateShiftWeekController); //done

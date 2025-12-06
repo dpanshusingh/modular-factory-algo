@@ -175,6 +175,7 @@ export const getAllShifts = async () => {
         startTime
         endTime
         lunchStartTime
+        lunchEndTime
       }
     }
   `;
@@ -187,11 +188,28 @@ export const getAllShifts = async () => {
   return response.data?.shifts ?? [];
 };
 
+export const getWorkersNameWithShiftId = async (id: string) => {
+  const query = `
+    query GetWorkersbyShiftId($id: String!) {
+      workers(
+        where: {
+          shift: { id: { eq: $id } }
+        }
+      ) {
+       id
+       firstName
+       lastName
+      }
+    }
+  `;
+
+  const response = await dataConnect.executeGraphql(query, { variables: { id } });
+  return response.data;
+};
+
 export const getAllShiftsWithWorkersCount = async () => {
-  // 1. Get all shifts
   const shifts = await getAllShifts();
 
-  // 2. Prepare GraphQL query for worker count
   const query = `
     query GetWorkersCount($id: String!) {
       workers(
@@ -224,6 +242,7 @@ export const getAllShiftsWithWorkersCount = async () => {
       startTime: shift.startTime,
       endTime: shift.endTime,
       lunchStartTime: shift.lunchStartTime,
+      lunchEndTime: shift.lunchEndTime,
       workersCount,
     });
   }

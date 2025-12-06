@@ -13,6 +13,7 @@ import {
   getAllShiftsWithWorkersCount,
   getAllAvailableWorkers,
   getAllUnavailableWorkers,
+  getWorkersNameWithShiftId,
   deleteShiftWeek,
   updateWorkerShiftIdBulk,
 } from "../queries/shift.query";
@@ -20,14 +21,7 @@ import {
 // Create Shift
 export const createShiftController = async (req: Request, res: Response) => {
   try {
-    const {
-      name,
-      startTime,
-      endTime,
-      lunchStartTime,
-      lunchEndTime,
-      weekdayOrdinals,
-    } = req.body;
+    const { name, startTime, endTime, lunchStartTime, lunchEndTime } = req.body;
     const id = uuidv4();
 
     const station = await createShift({
@@ -37,7 +31,7 @@ export const createShiftController = async (req: Request, res: Response) => {
       endTime,
       lunchStartTime,
       lunchEndTime,
-      weekdayOrdinals,
+      weekdayOrdinals: [],
     });
 
     res.status(201).json({
@@ -51,8 +45,10 @@ export const createShiftController = async (req: Request, res: Response) => {
   }
 };
 
-
-export const bulkUpdateWorkerShiftIdController = async (req: Request, res: Response) => {
+export const bulkUpdateWorkerShiftIdController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { workerIds, shiftId } = req.body;
 
@@ -72,7 +68,7 @@ export const bulkUpdateWorkerShiftIdController = async (req: Request, res: Respo
 
     const result = await updateWorkerShiftIdBulk(workerIds, shiftId);
 
-   // const updatedCount = Object.keys(result).length;
+    // const updatedCount = Object.keys(result).length;
 
     return res.status(200).json({
       success: true,
@@ -150,6 +146,22 @@ export const getAllShiftsController = async (_req: Request, res: Response) => {
   }
 };
 
+export const getWorkersNameWithShiftIdController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const id = req.params.id;
+    const shifts = await getWorkersNameWithShiftId(id);
+    res.status(200).json({
+      success: true,
+      data: { shifts: shifts },
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const getAllAssignedShiftsTotheWeekDaysController = async (
   _req: Request,
   res: Response
@@ -173,7 +185,7 @@ export const getAllAvailableShiftsController = async (
     const shifts = await getAllAvailableWorkers();
     res.status(200).json({
       success: true,
-      data: { shifts: shifts },
+      data: { workers: shifts },
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
