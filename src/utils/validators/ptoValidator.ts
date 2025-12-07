@@ -9,6 +9,7 @@ export const PTO_TYPE = [
 ] as const;
 
 export const updatePtoSchema = yup.object().shape({
+  workerId: yup.string().optional(),
   startDate: yup.date().required("Start date is required."),
   endDate: yup
     .date()

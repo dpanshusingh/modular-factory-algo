@@ -78,8 +78,8 @@ export const updatePtoRequest = async (data: any) => {
   const updateFields: string[] = [];
   if (data.startDate) updateFields.push(`startDate: "${data.startDate}"`);
   if (data.endDate) updateFields.push(`endDate: "${data.endDate}"`);
-  if (data.status) updateFields.push(`status: "${data.status}"`);
-  if (data.type) updateFields.push(`type: "${data.type}"`);
+  if (data.status) updateFields.push(`status: ${data.status}`);
+  if (data.type) updateFields.push(`type: ${data.type}`);
   if (data.hoursRequested)
     updateFields.push(`hoursRequested: ${Number(data.hoursRequested)}`);
   if (data.note) updateFields.push(`note: "${data.note}"`);
