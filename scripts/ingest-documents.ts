@@ -1,7 +1,7 @@
 /**
  * HR Policy Document Ingestion Script
  *
- * This script ingests PDF documents from data/hr-docs/ into Pinecone vector database
+ * This script ingests PDF and TXT documents from data/hr-docs/ into Pinecone vector database
  * for use in the RAG (Retrieval-Augmented Generation) pipeline.
  *
  * Features:
@@ -74,7 +74,7 @@ const checkIfDocumentExists = async (
 
     // Query with metadata filter to find any chunk with this filename
     // Using a dummy vector since we only care about metadata
-    const result = await index.query({
+    const result = await index.namespace("hr-docs").query({
       vector: new Array(3072).fill(0),
       topK: 1,
       filter: { filename: { $eq: filename } },
@@ -95,6 +95,8 @@ const checkIfDocumentExists = async (
 
 /**
  * Delete all chunks for a specific document from Pinecone
+ * Note: Serverless indexes don't support metadata filtering for deletion,
+ * so we first query to get IDs, then delete by ID
  */
 const deleteDocumentChunks = async (
   pinecone: Pinecone,
@@ -105,13 +107,26 @@ const deleteDocumentChunks = async (
 
   console.log(`  🗑️  Deleting old chunks for: ${filename}`);
 
-  await index.deleteMany({
+  // Step 1: Query to get all vector IDs for this filename
+  const queryResult = await index.namespace("hr-docs").query({
+    vector: new Array(3072).fill(0),
+    topK: 10000, // Max allowed - should be enough for any document
     filter: { filename: { $eq: filename } },
+    includeMetadata: false,
   });
+
+  // Step 2: Delete by IDs
+  if (queryResult.matches && queryResult.matches.length > 0) {
+    const idsToDelete = queryResult.matches.map((m) => m.id);
+    console.log(`  🗑️  Deleting ${idsToDelete.length} chunks...`);
+    await index.namespace("hr-docs").deleteMany(idsToDelete);
+  } else {
+    console.log(`  ⚠️  No chunks found to delete`);
+  }
 };
 
 /**
- * Ingest a single PDF document into Pinecone
+ * Ingest a single PDF or TXT document into Pinecone
  */
 const ingestDocument = async (
   filepath: string,
@@ -144,21 +159,32 @@ const ingestDocument = async (
   }
 
   try {
-    // Load PDF with LlamaParse
-    console.log(`  📖 Loading PDF with LlamaParse...`);
-    const parser = new LlamaParse({
-      apiKey: LLAMA_CLOUD_API_KEY!,
-      resultType: "markdown", // CRITICAL: Preserves table structure
-    } as any); // Type assertion needed - llama-parse types may be incomplete
+    let fullText: string;
 
-    // Read file and create Blob for llama-parse
-    const fileBuffer = await fs.readFile(filepath);
-    const uint8Array = new Uint8Array(fileBuffer);
-    const fileBlob = new Blob([uint8Array], { type: "application/pdf" });
+    // Handle different file types
+    if (filepath.endsWith('.pdf')) {
+      // Load PDF with LlamaParse
+      console.log(`  📖 Loading PDF with LlamaParse...`);
+      const parser = new LlamaParse({
+        apiKey: LLAMA_CLOUD_API_KEY!,
+        resultType: "markdown", // CRITICAL: Preserves table structure
+      } as any); // Type assertion needed - llama-parse types may be incomplete
 
-    // Parse the PDF file (returns markdown with preserved table structure)
-    const result = await parser.parseFile(fileBlob);
-    const fullText = result.markdown;
+      // Read file and create Blob for llama-parse
+      const fileBuffer = await fs.readFile(filepath);
+      const uint8Array = new Uint8Array(fileBuffer);
+      const fileBlob = new Blob([uint8Array], { type: "application/pdf" });
+
+      // Parse the PDF file (returns markdown with preserved table structure)
+      const result = await parser.parseFile(fileBlob);
+      fullText = result.markdown;
+    } else if (filepath.endsWith('.txt')) {
+      // Load TXT file directly
+      console.log(`  📖 Loading TXT file...`);
+      fullText = await fs.readFile(filepath, 'utf-8');
+    } else {
+      throw new Error(`Unsupported file type: ${filepath}`);
+    }
 
     // Convert to LangChain Document format for splitting
     const doc = new LangChainDocument({
@@ -298,17 +324,17 @@ const main = async () => {
 
   // Reset index if requested
   if (options.reset) {
-    console.log("⚠️  Resetting Pinecone index...");
+    console.log("⚠️  Resetting Pinecone index (hr-docs namespace)...");
     const index = pinecone.Index(PINECONE_INDEX_NAME);
-    await index.deleteAll();
+    await index.namespace("hr-docs").deleteAll();
     console.log("✅ Index cleared\n");
   }
 
-  // Get all PDF files
+  // Get all PDF and TXT files
   let files: string[];
   try {
     const allFiles = await fs.readdir(DOCS_DIR);
-    files = allFiles.filter((f) => f.endsWith(".pdf"));
+    files = allFiles.filter((f) => f.endsWith(".pdf") || f.endsWith(".txt"));
   } catch (error: any) {
     console.error(`❌ Error reading docs directory: ${error.message}`);
     console.log(`\nMake sure the directory exists: ${DOCS_DIR}`);
@@ -316,12 +342,12 @@ const main = async () => {
   }
 
   if (files.length === 0) {
-    console.log(`⚠️  No PDF files found in ${DOCS_DIR}`);
-    console.log(`\nAdd PDF files to the directory and run again.`);
+    console.log(`⚠️  No PDF or TXT files found in ${DOCS_DIR}`);
+    console.log(`\nAdd PDF or TXT files to the directory and run again.`);
     process.exit(0);
   }
 
-  console.log(`Found ${files.length} PDF file(s)\n`);
+  console.log(`Found ${files.length} file(s)\n`);
 
   // Process each file
   const results: IngestResult[] = [];
