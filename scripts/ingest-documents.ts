@@ -37,8 +37,8 @@ const PINECONE_INDEX_NAME = process.env.PINECONE_INDEX_NAME;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY;
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "text-embedding-3-large";
-const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || "3000", 10);
-const CHUNK_OVERLAP = parseInt(process.env.CHUNK_OVERLAP || "500", 10);
+const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || "6000", 10);
+const CHUNK_OVERLAP = parseInt(process.env.CHUNK_OVERLAP || "750", 10);
 
 interface IngestOptions {
   force?: boolean; // Re-ingest all docs, ignoring hashes
