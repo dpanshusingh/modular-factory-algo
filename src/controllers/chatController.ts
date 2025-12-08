@@ -44,6 +44,7 @@ export const handleChatMessage = async (
     const { message, sessionId, metadata } = validatedData;
 
     console.log(`💬 Received chat message (${message.length} chars, has file: ${!!uploadedFile})`);
+    console.log(`🔑 Session ID received: ${sessionId || 'NOT PROVIDED'}`);
 
     // 4. Handle PDF parsing if file was uploaded
     let pdfText = "";
@@ -149,7 +150,9 @@ ${ragContext || "No relevant context available."}
 
 If the user's message includes an <uploaded_pdf> tag, they have uploaded a PDF document for you to analyze along with their question.
 
-Please provide a clear, helpful, brief answer based on the context above.`);
+Please provide a clear, helpful, brief answer based on the context above.
+
+IMPORTANT: Do NOT offer to provide information you're not sure you can provide.`);
 
     // 11. Build message array for LLM
     const messages = [
@@ -221,5 +224,50 @@ Please provide a clear, helpful, brief answer based on the context above.`);
     } else {
       next(error);
     }
+  }
+};
+
+/**
+ * Get chat history for a session
+ * GET /api/chat/history/:sessionId
+ */
+export const getChatHistory = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      const error: CustomError = new Error("Session ID is required");
+      error.status = 400;
+      throw error;
+    }
+
+    console.log(`📜 Fetching chat history for session: ${sessionId}`);
+
+    // Get conversation history from session manager
+    const messages = await getConversationHistory(sessionId);
+
+    const apiResponse: ApiResponse = {
+      success: true,
+      message: "Chat history retrieved successfully",
+      data: {
+        sessionId,
+        messages: messages.map(msg => ({
+          role: msg.role,
+          content: msg.content,
+          timestamp: msg.timestamp,
+          attachmentType: msg.attachmentType,
+          attachmentFilename: msg.attachmentFilename,
+        })),
+      },
+    };
+
+    res.status(200).json(apiResponse);
+  } catch (error) {
+    console.error("❌ Error fetching chat history:", error);
+    next(error);
   }
 };

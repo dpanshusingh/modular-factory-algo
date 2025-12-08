@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { handleChatMessage } from "../controllers/chatController";
+import { handleChatMessage, getChatHistory } from "../controllers/chatController";
 import { authenticateToken } from "../middlewares/authMiddleware";
 import { apiLimiter } from "../middlewares/rateLimiter";
 import { optionalPDFUpload } from "../middlewares/uploadMiddleware";
@@ -24,6 +24,17 @@ router.post(
   apiLimiter,
   optionalPDFUpload, // Multer middleware for optional PDF upload
   handleChatMessage
+);
+
+/**
+ * GET /api/chat/history/:sessionId
+ * Get chat history for a specific session
+ * Protected by Firebase auth
+ */
+router.get(
+  "/history/:sessionId",
+  authenticateToken,
+  getChatHistory
 );
 
 export { router as chatRoutes };

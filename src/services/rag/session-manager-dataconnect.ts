@@ -87,8 +87,8 @@ export const getOrCreateSession = async (
             }
         }
 
-        // Create new session
-        const newSessionId = uuidv4();
+        // Create new session (use provided sessionId if available, otherwise generate new one)
+        const newSessionId = sessionId || uuidv4();
         const now = new Date();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + SESSION_TTL_HOURS);
