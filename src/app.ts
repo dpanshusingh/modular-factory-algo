@@ -20,6 +20,7 @@ import { travelerTemplateInspectionItemTemplateRoutes } from "./routes/travelerT
 import { PtoManagementRoutes } from "./routes/ptoManagement.route";
 import { moduleRouter } from "./routes/module.routes";
 import { departmentRoutes } from "./routes/department.routes";
+import { chatRoutes } from "./routes/chatRoutes";
 import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
 import { taskTemplateModuleAttributeRoutes } from "./routes/taskTemplateModuleAttribute.routes";
 import { moduleProfileModuleAttributeRoutes } from "./routes/moduleProfileModuleAttribute.routes";
@@ -37,13 +38,9 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/public", express.static("public"));
 app.use(
   cors({
-    origin: [
-      ENV.ORIGIN_DEV,
-      ENV.ORIGIN_PROD,
-      ENV.ORIGIN_LOCAL, // optional if you want local dev too
-    ],
-    methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+    origin: ENV.ORIGINS,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
 );
@@ -78,6 +75,7 @@ app.use("/api/ptoManagement", PtoManagementRoutes);
 app.use("/api/module", moduleRouter);
 
 app.use("/api/departments", departmentRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.use("/api/moduleattribute", ModuleAttributeRoutes);
 

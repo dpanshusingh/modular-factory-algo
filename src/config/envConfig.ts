@@ -10,9 +10,7 @@ if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL is not defined");
 if (!process.env.FIREBASE_PROJECT_ID)
   throw new Error("FIREBASE_PROJECT_ID is not defined");
 
-if (!process.env.ORIGIN_DEV) throw new Error("ORIGIN_DEV is not defined");
-if (!process.env.ORIGIN_PROD) throw new Error("ORIGIN_PROD is not defined");
-if (!process.env.ORIGIN_LOCAL) throw new Error("ORIGIN_LOCAL is not defined");
+if (!process.env.ORIGINS) throw new Error("ORIGINS is not defined");
 
 if (!process.env.FIREBASE_PRIVATE_KEY)
   throw new Error("FIREBASE_PRIVATE_KEY is not defined");
@@ -27,9 +25,7 @@ export const ENV = {
   // Server configuration
   PORT: process.env.PORT,
   CORS_ORIGIN: process.env.CORS_ORIGIN,
-  ORIGIN_DEV: process.env.ORIGIN_DEV,
-  ORIGIN_PROD: process.env.ORIGIN_PROD,
-  ORIGIN_LOCAL: process.env.ORIGIN_LOCAL,
+  ORIGINS: process.env.ORIGINS?.split(',').map(origin => origin.trim()) || [],
   NODE_ENV: process.env.NODE_ENV || "development",
 
   // Database configuration
@@ -55,4 +51,13 @@ export const ENV = {
     region: process.env.FIREBASE_REGION,
     connectionId: process.env.FIREBASE_DATACONNECT_CONNECTION_ID,
   },
+
+  // LLM Configuration
+  LLM_PROVIDER: process.env.LLM_PROVIDER,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+  GOOGLE_API_KEY: process.env.GOOGLE_API_KEY,
+  LLM_MODEL: process.env.LLM_MODEL,
+  LLM_TEMPERATURE: process.env.LLM_TEMPERATURE,
+  LLM_MAX_TOKENS: process.env.LLM_MAX_TOKENS
 };
