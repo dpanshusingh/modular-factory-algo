@@ -7,12 +7,12 @@ import {
   getOrCreateSession,
   addMessageToSession,
   getConversationHistory,
-  formatConversationHistory,
 } from "../services/rag/session-manager-dataconnect";
 import { getLLMConfig, createLLM } from "../config/llmConfig";
 import { parsePDFFile, validatePDFFile } from "../services/rag/pdf-parser";
+import { SystemMessage, HumanMessage, AIMessage } from "langchain";
 
-const RETRIEVAL_TOP_K = parseInt(process.env.RETRIEVAL_TOP_K || "5", 10);
+const RETRIEVAL_TOP_K = parseInt(process.env.RETRIEVAL_TOP_K || "10", 10);
 
 /**
  * Handle incoming chat message requests (with optional PDF upload)
@@ -84,8 +84,12 @@ export const handleChatMessage = async (
     let attachmentFilename: string | undefined;
 
     if (pdfText) {
-      // PDF was successfully parsed - content includes extracted text
-      userMessageContent = `${message}\n\n[Attached PDF: ${pdfFilename}]\n\n${pdfText}`;
+      // PDF was successfully parsed - content includes extracted text with proper delimitation
+      userMessageContent = `${message}
+
+<uploaded_pdf filename="${pdfFilename}">
+${pdfText}
+</uploaded_pdf>`;
       attachmentType = "pdf";
       attachmentFilename = pdfFilename;
     } else {
@@ -126,26 +130,37 @@ export const handleChatMessage = async (
       // Continue without RAG context - LLM can still respond
     }
 
-    // 9. Get conversation history
+    // 9. Get conversation history and build message array
     const conversationHistory = await getConversationHistory(session.id);
-    const formattedHistory = formatConversationHistory(
-      conversationHistory.slice(0, -1) // Exclude the message we just added
-    );
+    const historyMessages = conversationHistory.slice(0, -1).map(msg => {
+      if (msg.role === "user") {
+        return new HumanMessage(msg.content);
+      } else {
+        return new AIMessage(msg.content);
+      }
+    });
 
-    // 10. Build prompt for LLM
-    const systemPrompt = `You are a helpful HR assistant. Use the following context from HR policy documents to answer the user's question accurately. If the context doesn't contain relevant information, say so clearly.
+    // 10. Build system message with RAG context
+    const systemMessage = new SystemMessage(`You are a helpful HR assistant. You may use the attached context from HR policy documents to answer the user's question accurately. 
 
-Context from HR Documents:
+The context is provided in XML-delimited chunks below. Each chunk comes from a specific source document and contains relevant information extracted from the HR knowledge base.
+
 ${ragContext || "No relevant context available."}
 
-Conversation History:
-${formattedHistory || "No previous conversation."}
+If the user's message includes an <uploaded_pdf> tag, they have uploaded a PDF document for you to analyze along with their question.
 
-User Question: ${userMessageContent}
+Please provide a clear, helpful, brief answer based on the context above.`);
 
-Please provide a clear, helpful answer based on the context above. If you reference specific policies, mention the source document.`;
+    // 11. Build message array for LLM
+    const messages = [
+      systemMessage,
+      ...historyMessages,
+      new HumanMessage(userMessageContent)
+    ];
 
-    // 11. Invoke LLM
+    console.log(`📝 Built message array: 1 system + ${historyMessages.length} history + 1 user = ${messages.length} total messages`);
+
+    // 12. Invoke LLM
     let aiResponse = "";
     let llmModel = "";
     let llmProvider = "";
@@ -157,9 +172,9 @@ Please provide a clear, helpful answer based on the context above. If you refere
       llmModel = llmConfig.model;
       llmProvider = llmConfig.provider;
 
-      console.log(`🤖 Invoking LLM (${llmProvider}/${llmModel})...`);
+      console.log(`🤖 Invoking LLM (${llmProvider}/${llmModel}) with ${messages.length} messages...`);
 
-      const response = await llm.invoke(systemPrompt);
+      const response = await llm.invoke(messages);
       aiResponse = typeof response.content === "string"
         ? response.content
         : JSON.stringify(response.content);
@@ -174,10 +189,10 @@ Please provide a clear, helpful answer based on the context above. If you refere
       throw error;
     }
 
-    // 12. Add AI response to session
+    // 13. Add AI response to session
     await addMessageToSession(session.id, "assistant", aiResponse);
 
-    // 13. Return response with PDF metadata
+    // 14. Return response with PDF metadata
     const apiResponse: ApiResponse = {
       success: true,
       message: "Chat response generated successfully",
