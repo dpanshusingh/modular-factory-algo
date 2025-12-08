@@ -152,7 +152,7 @@ If the user's message includes an <uploaded_pdf> tag, they have uploaded a PDF d
 
 Please provide a clear, helpful, brief answer based on the context above.
 
-IMPORTANT: Do NOT offer to provide information you're not sure you can provide.`);
+IMPORTANT: Do NOT offer to provide information you're not sure you can provide. Please remember you cannot directly access the web.`);
 
     // 11. Build message array for LLM
     const messages = [
