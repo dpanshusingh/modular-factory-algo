@@ -1,0 +1,8 @@
+node_modules
+dist
+.DS_Store
+*.log
+coverage
+load_test_results.json
+load_test_output.txt
+test_requests.sh
