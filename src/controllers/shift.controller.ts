@@ -59,21 +59,11 @@ export const bulkUpdateWorkerShiftIdController = async (
       });
     }
 
-    if (!shiftId) {
-      return res.status(400).json({
-        success: false,
-        message: "shiftId is required",
-      });
-    }
-
     const result = await updateWorkerShiftIdBulk(workerIds, shiftId);
-
-    // const updatedCount = Object.keys(result).length;
 
     return res.status(200).json({
       success: true,
       message: "Workers updated successfully",
-      // updatedCount,
       result,
     });
   } catch (error) {
@@ -155,7 +145,7 @@ export const getWorkersNameWithShiftIdController = async (
     const shifts = await getWorkersNameWithShiftId(id);
     res.status(200).json({
       success: true,
-      data: { shifts: shifts },
+      data: shifts,
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
