@@ -66,7 +66,7 @@ export const updateWorkerShiftIdBulk = async (
       (id, index) => `
         w${index}: worker_update(
           id: "${id}",
-          data: { shiftId: "${shiftId}" }
+          data: { shiftId: ${shiftId ? `"${shiftId}"` : "null"} }
         )
       `
     )
