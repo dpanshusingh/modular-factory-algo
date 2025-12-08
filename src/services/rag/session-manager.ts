@@ -25,7 +25,7 @@ interface ChatSession {
 }
 
 const SESSION_TTL_HOURS = parseInt(process.env.SESSION_TTL_HOURS || "24", 10);
-const MAX_TURNS = parseInt(process.env.MAX_CONVERSATION_HISTORY || "10", 10) / 2; // Convert to turns
+const MAX_TURNS = parseInt(process.env.MAX_CONVERSATION_HISTORY || "20", 10) / 2; // Convert to turns
 
 // In-memory storage
 const sessions = new Map<string, ChatSession>();
