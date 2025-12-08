@@ -10,12 +10,14 @@ import {
   formatConversationHistory,
 } from "../services/rag/session-manager-dataconnect";
 import { getLLMConfig, createLLM } from "../config/llmConfig";
+import { parsePDFFile, validatePDFFile } from "../services/rag/pdf-parser";
 
 const RETRIEVAL_TOP_K = parseInt(process.env.RETRIEVAL_TOP_K || "5", 10);
 
 /**
- * Handle incoming chat message requests
+ * Handle incoming chat message requests (with optional PDF upload)
  * POST /api/chat
+ * Content-Type: multipart/form-data or application/json
  */
 export const handleChatMessage = async (
   req: Request,
@@ -23,28 +25,99 @@ export const handleChatMessage = async (
   next: NextFunction
 ) => {
   try {
-    // 1. Validate request
-    const validatedData = await validateChatRequest(req.body as ChatRequest);
+    // 1. Extract file if present (multer attaches to req.file)
+    const uploadedFile = req.file as Express.Multer.File | undefined;
+
+    // 2. Parse metadata if it's a string (happens with multipart/form-data)
+    const requestBody = { ...req.body };
+    if (typeof requestBody.metadata === 'string') {
+      try {
+        requestBody.metadata = JSON.parse(requestBody.metadata);
+      } catch (error) {
+        console.error('Failed to parse metadata JSON:', error);
+        // Leave as string, validator will catch the error
+      }
+    }
+
+    // 3. Validate request body
+    const validatedData = await validateChatRequest(requestBody as ChatRequest);
     const { message, sessionId, metadata } = validatedData;
 
-    console.log(`💬 Received chat message (${message.length} chars)`);
+    console.log(`💬 Received chat message (${message.length} chars, has file: ${!!uploadedFile})`);
 
-    // 2. Get or create session
+    // 4. Handle PDF parsing if file was uploaded
+    let pdfText = "";
+    let pdfFilename = "";
+    let pdfTruncated = false;
+    let pdfProcessingError: string | undefined;
+
+    if (uploadedFile) {
+      try {
+        // Validate PDF
+        validatePDFFile(uploadedFile);
+
+        // Parse PDF
+        const parsedPDF = await parsePDFFile(
+          uploadedFile.buffer,
+          uploadedFile.originalname
+        );
+
+        pdfText = parsedPDF.text;
+        pdfFilename = uploadedFile.originalname;
+        pdfTruncated = parsedPDF.truncated;
+
+        console.log(
+          `📄 PDF processed: ${pdfFilename} (${parsedPDF.originalLength} chars, truncated: ${pdfTruncated})`
+        );
+      } catch (pdfError: any) {
+        console.error("❌ PDF processing failed:", pdfError);
+        pdfProcessingError = pdfError.message;
+        // Don't throw - continue with text message only (graceful degradation)
+      }
+    }
+
+    // 5. Determine final message content
+    // If PDF uploaded and parsed successfully: combine message + PDF text
+    // If PDF failed or not present: use message only
+    let userMessageContent: string;
+    let attachmentType: string | undefined;
+    let attachmentFilename: string | undefined;
+
+    if (pdfText) {
+      // PDF was successfully parsed - content includes extracted text
+      userMessageContent = `${message}\n\n[Attached PDF: ${pdfFilename}]\n\n${pdfText}`;
+      attachmentType = "pdf";
+      attachmentFilename = pdfFilename;
+    } else {
+      // No PDF or parsing failed - just use the text message
+      userMessageContent = message;
+    }
+
+    console.log(`💬 Processing message (${userMessageContent.length} chars total)`);
+
+    // 6. Get or create session
     const session = await getOrCreateSession(
       sessionId,
       metadata?.userId,
       metadata || undefined
     );
 
-    // 3. Add user message to session
-    await addMessageToSession(session.id, "user", message);
+    // 7. Add user message to session (includes PDF text if present)
+    await addMessageToSession(
+      session.id,
+      "user",
+      userMessageContent,
+      attachmentType,
+      attachmentFilename
+    );
 
-    // 4. Retrieve relevant context from RAG
+    // 8. Retrieve relevant context from RAG
     let ragContext = "";
     let sourceDocuments: string[] = [];
 
     try {
-      const retrievalResult = await retrieveContext(message, RETRIEVAL_TOP_K);
+      // Use the full content (including PDF text if present) for retrieval
+      const retrievalResult = await retrieveContext(userMessageContent, RETRIEVAL_TOP_K);
       ragContext = retrievalResult.context;
       sourceDocuments = retrievalResult.sourceDocuments;
       console.log(`📚 Retrieved context from ${sourceDocuments.length} sources`);
@@ -53,13 +126,13 @@ export const handleChatMessage = async (
       // Continue without RAG context - LLM can still respond
     }
 
-    // 5. Get conversation history
+    // 9. Get conversation history
     const conversationHistory = await getConversationHistory(session.id);
     const formattedHistory = formatConversationHistory(
       conversationHistory.slice(0, -1) // Exclude the message we just added
     );
 
-    // 6. Build prompt for LLM
+    // 10. Build prompt for LLM
     const systemPrompt = `You are a helpful HR assistant. Use the following context from HR policy documents to answer the user's question accurately. If the context doesn't contain relevant information, say so clearly.
 
 Context from HR Documents:
@@ -68,11 +141,11 @@ ${ragContext || "No relevant context available."}
 Conversation History:
 ${formattedHistory || "No previous conversation."}
 
-User Question: ${message}
+User Question: ${userMessageContent}
 
 Please provide a clear, helpful answer based on the context above. If you reference specific policies, mention the source document.`;
 
-    // 7. Invoke LLM
+    // 11. Invoke LLM
     let aiResponse = "";
     let llmModel = "";
     let llmProvider = "";
@@ -101,10 +174,10 @@ Please provide a clear, helpful answer based on the context above. If you refere
       throw error;
     }
 
-    // 8. Add AI response to session
+    // 12. Add AI response to session
     await addMessageToSession(session.id, "assistant", aiResponse);
 
-    // 9. Return response
+    // 13. Return response with PDF metadata
     const apiResponse: ApiResponse = {
       success: true,
       message: "Chat response generated successfully",
@@ -115,6 +188,10 @@ Please provide a clear, helpful answer based on the context above. If you refere
           sourceDocuments,
           model: llmModel,
           provider: llmProvider,
+          pdfProcessed: !!pdfText,
+          pdfFilename: pdfFilename || undefined,
+          pdfTruncated: pdfTruncated || undefined,
+          pdfProcessingError: pdfProcessingError || undefined,
         },
       },
     };

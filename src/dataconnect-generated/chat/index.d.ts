@@ -20,6 +20,8 @@ export interface AddChatMessageVariables {
   role: string;
   content: string;
   timestamp: TimestampString;
+  attachmentType?: string | null;
+  attachmentFilename?: string | null;
 }
 
 export interface AdhocInspectionItem_Key {
@@ -104,6 +106,8 @@ export interface ListChatMessagesData {
     role: string;
     content: string;
     timestamp: TimestampString;
+    attachmentType?: string | null;
+    attachmentFilename?: string | null;
   } & ChatMessage_Key)[];
 }
 
