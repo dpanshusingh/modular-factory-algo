@@ -5,7 +5,12 @@ import {
   endOfDayUTC,
   rangesOverlap,
 } from "../utils/time";
-import { UserDoc, FirestoreLogEntry } from "../types/firestoreTimelog";
+import {
+  UserDoc,
+  FirestoreLogEntry,
+  PaginatedAbsents,
+  AbsentRecord,
+} from "../types/firestoreTimelog";
 import {
   Timelog,
   CreateTimelogRequest,
@@ -309,7 +314,7 @@ export const getAbsents = async (
   filters: TimelogFilters = {},
   page: number,
   limit: number
-) => {
+): Promise<PaginatedAbsents> => {
   let s: Date;
   let e: Date;
 
@@ -327,11 +332,12 @@ export const getAbsents = async (
   const expectedWeekdays = getExpectedWorkdays(s, e);
   if (expectedWeekdays.length === 0) {
     console.log("No weekdays in the selected date range.");
-    return [];
+    return { data: [], totalRecords: 0 };
   }
 
   const processingPromises = usersSnap.docs.map(async (doc) => {
-    const user = await userFromSnap(doc)!;
+    const user = await userFromSnap(doc);
+    if (!user) return null;
 
     const entries: FirestoreLogEntry[] = user.time_log?.log_entries ?? [];
 
@@ -348,36 +354,35 @@ export const getAbsents = async (
     );
 
     if (absentDates.length > 0) {
-      return {
-        employee_id: user.employee_id,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        document_id: user.document_id,
+      const record: AbsentRecord = {
+        employee_id: user.employee_id ?? "",
+        first_name: user.first_name ?? "",
+        last_name: user.last_name ?? "",
+        document_id: user.document_id ?? "",
         absent_dates: absentDates,
       };
+      return record;
     }
+
     return null;
   });
 
   const results = await Promise.all(processingPromises);
-  const absentEmployees = results.filter(
-    (result): result is Exclude<typeof result, null> => result !== null
-  );
-  const allFlattenedAbsences: any[] = [];
-  absentEmployees.forEach((employee) => {
-    employee.absent_dates.forEach((dateString) => {
-      allFlattenedAbsences.push(employee);
-    });
-  });
 
-  const totalRecords = allFlattenedAbsences.length;
+  const absentEmployees: AbsentRecord[] = results.filter(
+    (result): result is AbsentRecord => result !== null
+  );
+
+  const totalRecords = absentEmployees.length;
 
   const startIndex = (page - 1) * limit;
   const endIndex = page * limit;
+
   const paginatedAbsentEmployees = absentEmployees.slice(startIndex, endIndex);
+
   return {
     data: paginatedAbsentEmployees,
-    totalRecords: totalRecords,
+    totalRecords,
   };
 };
 

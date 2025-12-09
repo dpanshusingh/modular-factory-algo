@@ -23,6 +23,7 @@ import {
   TimelogFilters,
 } from "../types/@server";
 import { CustomError } from "../types/customErrorInterface";
+import { AbsenceItem, TardyItem, TardyRecord } from "../types/firestoreTimelog";
 
 export const createTimelogController = async (
   req: Request,
@@ -113,19 +114,23 @@ export const getTimelogsAbsencesTardiesController = async (
     const limit = parseInt(req.query.limit as string) || DEFAULT_LIMIT;
     const queryValue = req.query.isAbsence as string;
     const isAbsenceQuery = queryValue === "true";
+
     const filters = {
       start: req.query.start as string,
       end: req.query.end as string,
     };
+
     const validatedFilters = await validateTimelogFilters(filters);
 
-    let finalData: any[] = [];
+    let finalData: (AbsenceItem | TardyItem)[] = [];
     let totalRecords = 0;
     let message = "Timelogs retrieved successfully";
+
     if (isAbsenceQuery) {
-      const result: any = await getAbsents(validatedFilters, page, limit);
+      const result = await getAbsents(validatedFilters, page, limit);
       totalRecords = result.totalRecords;
-      result.data.forEach((employee: any) => {
+
+      result.data.forEach((employee) => {
         employee.absent_dates.forEach((dateString: string) => {
           finalData.push({
             ID: employee.employee_id,
@@ -137,18 +142,17 @@ export const getTimelogsAbsencesTardiesController = async (
         });
       });
 
-      finalData.sort((a, b) => {
-        return (
-          new Date(a.dateOfAbsence).getTime() -
-          new Date(b.dateOfAbsence).getTime()
-        );
-      });
+      finalData.sort(
+        (a, b) =>
+          new Date((a as AbsenceItem).dateOfAbsence).getTime() -
+          new Date((b as AbsenceItem).dateOfAbsence).getTime()
+      );
     } else {
-      const result: any = await getTardies(validatedFilters, page, limit);
+      const result = await getTardies(validatedFilters, page, limit);
       totalRecords = result.totalRecords;
       message = "Timelogs for tardies retrieved successfully";
 
-      result.data.forEach((tardyEvent: any) => {
+      result.data.forEach((tardyEvent: TardyRecord) => {
         finalData.push({
           ID: tardyEvent.employee_id,
           dateOfTardiness: tardyEvent.tardy_date,
@@ -158,27 +162,26 @@ export const getTimelogsAbsencesTardiesController = async (
         });
       });
 
-      finalData.sort((a, b) => {
-        return (
-          new Date(a.dateOfTardiness).getTime() -
-          new Date(b.dateOfTardiness).getTime()
-        );
-      });
+      finalData.sort(
+        (a, b) =>
+          new Date((a as TardyItem).dateOfTardiness).getTime() -
+          new Date((b as TardyItem).dateOfTardiness).getTime()
+      );
     }
 
     const totalPages = Math.ceil(totalRecords / limit);
-    const response: PaginatedResponse<any> = {
+
+    res.status(200).json({
       success: true,
-      message: message,
+      message,
       data: finalData,
       pagination: {
-        page: page,
-        limit: limit,
+        page,
+        limit,
         total: totalRecords,
-        totalPages: totalPages,
+        totalPages,
       },
-    };
-    res.status(200).json(response);
+    });
   } catch (error) {
     next(error);
   }
