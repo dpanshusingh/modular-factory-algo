@@ -51,9 +51,9 @@ export const getAllStationsController = async (
 ) => {
   try {
     const stations = await getAllStations();
-      res.status(200).json({
+    res.status(200).json({
       success: true,
-      data: stations,
+      data: { stations: stations },
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -85,22 +85,48 @@ export const updateStationController = async (req: Request, res: Response) => {
   }
 };
 
-export const updateModuleOrderController = async (req: Request, res: Response) => {
+interface Station {
+  id: string;
+  order: number;
+}
+
+export const updateStationOrderController = async (
+  req: Request,
+  res: Response
+) => {
+  const {id} = req.params;
+  const { oldOrder, newOrder } = req.body;
+
+  const list: Station[] = await getAllStations();
+  const updates: { id: string; order: number }[] = [];
+
+  let between: Station[] = [];
+
+  if (oldOrder < newOrder) {
+    between = list.filter(
+      (x: Station) => x.order > oldOrder && x.order <= newOrder
+    );
+    between.forEach((x: Station) =>
+      updates.push({ id: x.id, order: x.order - 1 })
+    );
+  } else {
+    between = list.filter(
+      (x: Station) => x.order >= newOrder && x.order < oldOrder
+    );
+    between.forEach((x: Station) =>
+      updates.push({ id: x.id, order: x.order + 1 })
+    );
+  }
+  updates.push({ id, order: newOrder });
   try {
-    const { id } = req.params;
-    // Body may contain only "order"
-    const updatePayload: any = {};
-    if (req.body.order !== undefined) updatePayload.order = req.body.order;
-    await UpdateStationOrder(id, updatePayload);
-    const updatedStations = await getStationById(id);
-    res.status(200).json({
-      success: true,
-      message: "Station reordered successfully",
-      data: updatedStations,
-    });
-  } catch (error: any) {
-    console.error("update Station error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    await Promise.all(
+      updates.map((item) => UpdateStationOrder(item.id, item.order))
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to reorder Station" });
   }
 };
 

@@ -41,6 +41,15 @@ export const createStation = async (input: StationInput & { id: string }) => {
   return response.data;
 };
 
+interface Station {
+  id: string;
+  order: number;
+}
+
+interface ExecuteGraphqlResponse {
+  stations: Station[];
+}
+
 // Read all
 export const getAllStations = async () => {
   const query = `
@@ -55,10 +64,12 @@ export const getAllStations = async () => {
       }
     }
   `;
-  const response = await dataConnect.executeGraphql(query, {});
-  return response.data ?? [];
+  const response = await dataConnect.executeGraphql<ExecuteGraphqlResponse, {}>(
+    query,
+    {}
+  );
+  return response?.data?.stations ?? [];
 };
-
 
 export const stationsCounts = async (): Promise<number> => {
   const query = `
@@ -73,20 +84,19 @@ export const stationsCounts = async (): Promise<number> => {
   const count = (response.data as any)?.stations?.[0]?._count ?? 0;
 
   return count;
+};
 
-}
-
-export const UpdateStationOrder = async (
-  id: string,
-  input: Partial<StationInput>
-) => {
+export const UpdateStationOrder = async (id: string, order: number) => {
   const query = `
-    mutation UpdateStation($id: String!, $data: station_update_input!) {
-      station_update(id: $id, data: $data)
-    }
-  `;
+  mutation UpdateStation($id: String!, $order: Int!) {
+    station_update(
+      key: { id: $id }
+      data: { order: $order }
+    )
+  }
+`;
   const response = await dataConnect.executeGraphql(query, {
-    variables: { id, data: input },
+    variables: { id, order },
   });
   return response.data ?? null;
 };

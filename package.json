@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "clean": "rimraf dist",
@@ -60,6 +60,7 @@
     "prisma": "^5.22.0",
     "rimraf": "^6.0.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   }
 }

@@ -14,7 +14,8 @@ import { randomBytes } from "crypto";
 // Create module
 export const createModuleController = async (req: Request, res: Response) => {
   try {
-    const { moduleProfileId, travelerId, travelerTemplateId,serialNumber} = req.body;
+    const { moduleProfileId, travelerId, travelerTemplateId, serialNumber } =
+      req.body;
     const id = uuidv4();
     const orderCount = await getAllModuleCount();
     const order = orderCount + 1;
@@ -92,7 +93,13 @@ export const getByIdModuleController = async (req: Request, res: Response) => {
 export const updateModuleController = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { serialNumber ,moduleProfileId, travelerId, travelerTemplateId, order } = req.body;
+    const {
+      serialNumber,
+      moduleProfileId,
+      travelerId,
+      travelerTemplateId,
+      order,
+    } = req.body;
 
     // Step 1: Update the record
     await UpdateModule(id, {
@@ -123,33 +130,51 @@ export const updateModuleController = async (req: Request, res: Response) => {
 };
 
 // Update module order
-export const updateModuleOrderController = async (req: Request, res: Response) => {
+
+interface Module {
+  id: string;
+  order: number;
+}
+
+export const updateModuleOrderController = async (
+  req: Request,
+  res: Response
+) => {
+  const { id } = req.params;
+  const { oldOrder, newOrder } = req.body;
+
+  const list: Module[] = await getAllModule();
+  const updates: { id: string; order: number }[] = [];
+
+  let between: Module[] = [];
+
+  if (oldOrder < newOrder) {
+    between = list.filter(
+      (x: Module) => x.order > oldOrder && x.order <= newOrder
+    );
+    between.forEach((x: Module) =>
+      updates.push({ id: x.id, order: x.order - 1 })
+    );
+  } else {
+    between = list.filter(
+      (x: Module) => x.order >= newOrder && x.order < oldOrder
+    );
+    between.forEach((x: Module) =>
+      updates.push({ id: x.id, order: x.order + 1 })
+    );
+  }
+  updates.push({ id, order: newOrder });
   try {
-    const { id } = req.params;
+    await Promise.all(
+      updates.map((item) => UpdateModuleOrder(item.id, item.order))
+    );
 
-    // Body may contain only "order"
-    const updatePayload: any = {};
-
-    if (req.body.order !== undefined) updatePayload.order = req.body.order;
-    if (req.body.moduleProfileId) updatePayload.moduleProfileId = req.body.moduleProfileId;
-    if (req.body.travelerId) updatePayload.travelerId = req.body.travelerId;
-    if (req.body.travelerTemplateId) updatePayload.travelerTemplateId = req.body.travelerTemplateId;
-
-    await UpdateModuleOrder(id, updatePayload);
-
-    const updatedModule = await GetByIdModule(id);
-
-    res.status(200).json({
-      success: true,
-      message: "Module updated successfully",
-      data: updatedModule,
-    });
-  } catch (error: any) {
-    console.error("update module error:", error);
-    res.status(500).json({ success: false, error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to reorder Module" });
   }
 };
-
 
 // Delete module
 export const deleteModuleeaController = async (req: Request, res: Response) => {

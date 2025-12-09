@@ -21,6 +21,12 @@ import { PtoManagementRoutes } from "./routes/ptoManagement.route";
 import { moduleRouter } from "./routes/module.routes";
 import { departmentRoutes } from "./routes/department.routes";
 import { chatRoutes } from "./routes/chatRoutes";
+import { ModuleAttributeRoutes } from "./routes/moduleAttribute.routes";
+import { taskTemplateModuleAttributeRoutes } from "./routes/taskTemplateModuleAttribute.routes";
+import { moduleProfileModuleAttributeRoutes } from "./routes/moduleProfileModuleAttribute.routes";
+import { shiftRoutes } from "./routes/shift.routes";
+import { timeStudyRoutes } from "./routes/timeStudy.routes";
+
 const app = express();
 
 // Apply general rate limiting
@@ -70,6 +76,19 @@ app.use("/api/module", moduleRouter);
 
 app.use("/api/departments", departmentRoutes);
 app.use("/api/chat", chatRoutes);
+
+app.use("/api/moduleattribute", ModuleAttributeRoutes);
+
+app.use("/api/taskTemplateModuleAttribute", taskTemplateModuleAttributeRoutes);
+
+app.use(
+  "/api/moduleProfileModuleAttribute",
+  moduleProfileModuleAttributeRoutes
+);
+
+app.use("/api/timeStudy", timeStudyRoutes);
+
+app.use("/api/shifts", shiftRoutes);
 
 app.use(errorMiddleware);
 
