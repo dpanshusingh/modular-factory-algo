@@ -1,5 +1,6 @@
 import { Worker, Task, WorkerTask, PlanRequest } from '../types';
 import { parseDate } from '../utils/timeUtils';
+import { computeEstimatedTotalLaborHours } from '../utils/estimation';
 
 interface SimulationState {
     tasks: Map<string, {
@@ -24,12 +25,18 @@ export class PlanningService {
 
         // 1. Initialize Estimates
         tasks.forEach(t => {
-            // Mock calculation logic as per spec
+            // Try realistic estimator first (if task includes module/time-study data)
             if (t.estimatedTotalLaborHours === undefined) {
-                // If useHistorical, maybe it's lower? Mock: 
-                const base = t.minWorkers ? t.minWorkers * 4 : 4;
-                t.estimatedTotalLaborHours = useHistorical ? base * 0.9 : base;
+                const computed = computeEstimatedTotalLaborHours(t);
+                if (typeof computed === 'number') {
+                    t.estimatedTotalLaborHours = computed;
+                } else {
+                    // Fallback mock calculation
+                    const base = t.minWorkers ? t.minWorkers * 4 : 4;
+                    t.estimatedTotalLaborHours = useHistorical ? base * 0.9 : base;
+                }
             }
+
             if (t.estimatedRemainingLaborHours === undefined) {
                 t.estimatedRemainingLaborHours = t.estimatedTotalLaborHours;
             }
