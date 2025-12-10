@@ -13,7 +13,7 @@ export interface RetrievalResult {
  */
 export const retrieveContext = async (
   query: string,
-  topK: number = 5
+  topK: number = 10
 ): Promise<RetrievalResult> => {
   try {
     const vectorStore = await getVectorStore();
@@ -21,10 +21,22 @@ export const retrieveContext = async (
     // Perform similarity search in Pinecone
     const relevantDocs = await vectorStore.similaritySearch(query, topK);
 
-    // Build context string from retrieved chunks
-    const context = relevantDocs
-      .map((doc) => doc.pageContent)
+    // Build context string from retrieved chunks with proper XML delimitation
+    const chunks = relevantDocs
+      .map((doc, index) => {
+        const chunkNumber = index + 1;
+        const source = doc.metadata?.filename || 'Unknown';
+        return `<chunk_${chunkNumber} source="${source}">
+${doc.pageContent}
+</chunk_${chunkNumber}>`;
+      })
       .join('\n\n');
+
+    const context = `<context_from_documents>
+
+${chunks}
+
+</context_from_documents>`;
 
     // Extract unique source filenames from metadata
     const sourceDocuments = Array.from(

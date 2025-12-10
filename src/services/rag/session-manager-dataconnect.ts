@@ -17,6 +17,8 @@ interface ChatMessage {
     role: "user" | "assistant";
     content: string;
     timestamp: string;
+    attachmentType?: string;
+    attachmentFilename?: string;
 }
 
 interface ChatSession {
@@ -65,6 +67,8 @@ export const getOrCreateSession = async (
                             role: msg.role as "user" | "assistant",
                             content: msg.content,
                             timestamp: msg.timestamp,
+                            attachmentType: msg.attachmentType,
+                            attachmentFilename: msg.attachmentFilename,
                         }));
 
                         return {
@@ -83,8 +87,8 @@ export const getOrCreateSession = async (
             }
         }
 
-        // Create new session
-        const newSessionId = uuidv4();
+        // Create new session (use provided sessionId if available, otherwise generate new one)
+        const newSessionId = sessionId || uuidv4();
         const now = new Date();
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + SESSION_TTL_HOURS);
@@ -149,7 +153,9 @@ const trimToCompleteTurns = (messages: ChatMessage[], maxTurns: number): ChatMes
 export const addMessageToSession = async (
     sessionId: string,
     role: "user" | "assistant",
-    content: string
+    content: string,
+    attachmentType?: string,
+    attachmentFilename?: string
 ): Promise<void> => {
     try {
         // Add new message
@@ -162,9 +168,14 @@ export const addMessageToSession = async (
             role,
             content,
             timestamp,
+            attachmentType: attachmentType || null,
+            attachmentFilename: attachmentFilename || null,
         });
 
-        console.log(`💬 Added ${role} message to session ${sessionId}`);
+        const attachmentInfo = attachmentType
+            ? ` (${attachmentType}: ${attachmentFilename})`
+            : '';
+        console.log(`💬 Added ${role} message to session ${sessionId}${attachmentInfo}`);
 
         // Note: For production, you'd want to implement message trimming here
         // by querying all messages, identifying old ones, and deleting them
@@ -188,6 +199,8 @@ export const getConversationHistory = async (
             role: msg.role as "user" | "assistant",
             content: msg.content,
             timestamp: msg.timestamp,
+            attachmentType: msg.attachmentType,
+            attachmentFilename: msg.attachmentFilename,
         }));
 
         // Apply trimming to keep only recent turns

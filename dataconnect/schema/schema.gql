@@ -398,4 +398,8 @@ type ChatMessage @table {
   role: String! # 'user' or 'assistant'
   content: String!
   timestamp: Timestamp!
+
+  # Attachment metadata for PDF uploads
+  attachmentType: String      # 'pdf' | null
+  attachmentFilename: String  # Original filename or null
 }

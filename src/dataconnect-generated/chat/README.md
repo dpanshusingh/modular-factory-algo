@@ -224,6 +224,8 @@ export interface ListChatMessagesData {
     role: string;
     content: string;
     timestamp: TimestampString;
+    attachmentType?: string | null;
+    attachmentFilename?: string | null;
   } & ChatMessage_Key)[];
 }
 ```
@@ -468,6 +470,8 @@ export interface AddChatMessageVariables {
   role: string;
   content: string;
   timestamp: TimestampString;
+  attachmentType?: string | null;
+  attachmentFilename?: string | null;
 }
 ```
 ### Return Type
@@ -492,13 +496,15 @@ const addChatMessageVars: AddChatMessageVariables = {
   role: ..., 
   content: ..., 
   timestamp: ..., 
+  attachmentType: ..., // optional
+  attachmentFilename: ..., // optional
 };
 
 // Call the `addChatMessage()` function to execute the mutation.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await addChatMessage(addChatMessageVars);
 // Variables can be defined inline as well.
-const { data } = await addChatMessage({ id: ..., sessionId: ..., role: ..., content: ..., timestamp: ..., });
+const { data } = await addChatMessage({ id: ..., sessionId: ..., role: ..., content: ..., timestamp: ..., attachmentType: ..., attachmentFilename: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -526,12 +532,14 @@ const addChatMessageVars: AddChatMessageVariables = {
   role: ..., 
   content: ..., 
   timestamp: ..., 
+  attachmentType: ..., // optional
+  attachmentFilename: ..., // optional
 };
 
 // Call the `addChatMessageRef()` function to get a reference to the mutation.
 const ref = addChatMessageRef(addChatMessageVars);
 // Variables can be defined inline as well.
-const ref = addChatMessageRef({ id: ..., sessionId: ..., role: ..., content: ..., timestamp: ..., });
+const ref = addChatMessageRef({ id: ..., sessionId: ..., role: ..., content: ..., timestamp: ..., attachmentType: ..., attachmentFilename: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
