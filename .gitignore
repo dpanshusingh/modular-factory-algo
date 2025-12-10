@@ -6,3 +6,7 @@ coverage
 load_test_results.json
 load_test_output.txt
 test_requests.sh
+
+# Local documentation/scratchpad files
+calculating_*.md
+endpoint_*.md
