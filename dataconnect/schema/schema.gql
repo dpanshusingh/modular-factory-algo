@@ -17,15 +17,97 @@ type User @table {
 # Enums
 # =====================
 
-enum TaskStatus { pending approved rejected }
-enum LeadType { closeup drywall electrical exterior floors hvac insulation interior office paint plumbing roofing shipping walls }
-enum NoteType { approval rejection photoOnly move moveRequest normal }
-enum StorageDirectory { settings travelers temp }
-enum Skill { framing finishCarpentry electricalTrim electricalRough plumbing drywallHanging drywallMud texture painting roofing flooring boxMoving cutting hvac }
-enum ModuleCharacteristicType { squareFeet linearFeetExteriorWalls linearFeetInteriorWalls countInteriorWalls countToilets countSinks countWindows countExteriorDoors countInteriorDoors squareFeetExteriorCloseUp squareFeetRoofing linearFeetCabinets countElectricalTerminals linearFeetFirewall countStairs hasHvacDucting }
-enum WorkerRole { worker lead qam supervisor admin }
-enum IssueType { materialShortage mistake }
-
+enum TaskStatus {
+  pending
+  approved
+  rejected
+}
+enum LeadType {
+  closeup
+  drywall
+  electrical
+  exterior
+  floors
+  hvac
+  insulation
+  interior
+  office
+  paint
+  plumbing
+  roofing
+  shipping
+  walls
+}
+enum NoteType {
+  approval
+  rejection
+  photoOnly
+  move
+  moveRequest
+  normal
+}
+enum StorageDirectory {
+  settings
+  travelers
+  temp
+}
+enum Skill {
+  framing
+  finishCarpentry
+  electricalTrim
+  electricalRough
+  plumbing
+  drywallHanging
+  drywallMud
+  texture
+  painting
+  roofing
+  flooring
+  boxMoving
+  cutting
+  hvac
+}
+enum ModuleCharacteristicType {
+  squareFeet
+  linearFeetExteriorWalls
+  linearFeetInteriorWalls
+  countInteriorWalls
+  countToilets
+  countSinks
+  countWindows
+  countExteriorDoors
+  countInteriorDoors
+  squareFeetExteriorCloseUp
+  squareFeetRoofing
+  linearFeetCabinets
+  countElectricalTerminals
+  linearFeetFirewall
+  countStairs
+  hasHvacDucting
+}
+enum WorkerRole {
+  worker
+  lead
+  qam
+  supervisor
+  admin
+}
+enum IssueType {
+  materialShortage
+  mistake
+}
+enum PtoRequestStatus {
+  pending
+  approved
+  rejected
+}
+enum PtoType {
+  sick
+  vacation
+  juryDuty
+  bereavement
+  court
+}
 # =====================
 # Core Project Structure
 # =====================
@@ -264,16 +346,33 @@ type ManagedFile @table {
 }
 
 # =====================
+# Pto Requests
+# =====================
+type PtoRequest @table {
+  id: String!
+  worker: Worker!
+  startDate: Timestamp
+  endDate: Timestamp
+  type: PtoType
+  hoursRequested: Float
+  note: String
+  status: PtoRequestStatus
+}
+
+# =====================
 # Short-named Mapping Tables
 # =====================
 
-type TravelerTemplateInspectionItemTemplate @table(name: "traveler_template_inspection_item_template") {
+type TravelerTemplateInspectionItemTemplate
+  @table(name: "traveler_template_inspection_item_template") {
   id: String!
   travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_ttiit_trv")
-  inspectionItemTemplate: InspectionItemTemplate! @ref(constraintName: "fk_ttiit_tmp")
+  inspectionItemTemplate: InspectionItemTemplate!
+    @ref(constraintName: "fk_ttiit_tmp")
 }
 
-type TravelerTemplateTaskTemplate @table(name: "traveler_template_task_template") {
+type TravelerTemplateTaskTemplate
+  @table(name: "traveler_template_task_template") {
   id: String!
   travelerTemplate: TravelerTemplate! @ref(constraintName: "fk_ttt_trv")
   taskTemplate: TaskTemplate! @ref(constraintName: "fk_ttt_tmp")
