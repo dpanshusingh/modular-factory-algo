@@ -1,9 +1,8 @@
 # Modular Factory Scheduler
 
-This project implements two core algorithms for a Manufacturing Execution System (MES):
+This project implements a core algorithm for a Manufacturing Execution System (MES):
 
-1. **Worker-Task Matching**: Assigns available workers to tasks based on skills, availability, and optimization heuristics.
-2. **Schedule Planning**: Allocates labor over a timeline to ensure all tasks finish, prioritizing resource optimization.
+1. **Schedule Planning**: Allocates labor over a timeline to ensure all tasks finish, prioritizing resource optimization.
 
 ## Project Structure
 
@@ -36,13 +35,7 @@ npm test
 
 ## API Endpoints
 
-### 1. Match Workers to Tasks
-
-**POST** `/api/v1/worker-tasks/match`
-
-Matches unassigned tasks with available workers based on skill constraints and ranking.
-
-### 2. Plan Schedule
+### 1. Plan Schedule
 
 **POST** `/api/v1/worker-tasks/plan`
 
