@@ -19,9 +19,14 @@ export class PlanningService {
     private readonly TIME_STEP_MINUTES = 30; // 30 minute blocks
 
     public plan(request: PlanRequest): WorkerTask[] {
+        console.log('--- START PLANNING ---');
         const { workers, tasks, interval, useHistorical } = request;
+        console.log(`Inputs: ${workers.length} workers, ${tasks.length} tasks`);
+        console.log(`Interval: ${interval.startTime} to ${interval.endTime}`);
+
         const startTimeVals = parseDate(interval.startTime).getTime();
         const endTimeVals = parseDate(interval.endTime).getTime();
+        console.log(`Parsed Time: ${startTimeVals} to ${endTimeVals}`);
 
         // 1. Initialize Estimates
         tasks.forEach(t => {
@@ -63,7 +68,10 @@ export class PlanningService {
         let currentTime = startTimeVals;
 
         while (currentTime < endTimeVals) {
-            if (this.allTasksComplete(state)) break;
+            if (this.allTasksComplete(state)) {
+                console.log('All tasks complete. Breaking loop.');
+                break;
+            }
 
             // Identify Available Workers at this slice
             const availableWorkers = workers.filter(w => {
@@ -71,9 +79,16 @@ export class PlanningService {
                 if (wState.busyUntil > currentTime) return false;
 
                 // Check Explicit Availability
-                if (w.availability) {
+                if (w.availability && !Array.isArray(w.availability)) {
+                    // Frontend might send [] which is truthy but wrong type.
+                    // Fix: strict check or handle it.
                     const availStart = parseDate(w.availability.startTime).getTime();
                     const availEnd = parseDate(w.availability.endTime).getTime();
+                    if (Number.isNaN(availStart) || Number.isNaN(availEnd)) {
+                        console.warn(`Worker ${w.workerId} has invalid availability:`, w.availability);
+                        return true; // Default to available? or false?
+                    }
+
                     if (currentTime < availStart || currentTime >= availEnd) return false;
                 }
 
@@ -82,6 +97,9 @@ export class PlanningService {
 
             // Identify Ready Tasks
             const readyTasks = this.getReadyTasks(state, currentTime);
+            if (readyTasks.length > 0 && results.length === 0) {
+                console.log(`First Step ${new Date(currentTime).toISOString()}: Found ${readyTasks.length} ready tasks and ${availableWorkers.length} available workers.`);
+            }
 
             // Sort Tasks (Heuristic: Longest Remaining Work First -> effectively Critical Pathish)
             // Also prioritize tasks that have 'minWorkers' to meet urgency?
@@ -162,6 +180,7 @@ export class PlanningService {
             currentTime += stepMs;
         }
 
+        console.log(`--- PLANNING COMPLETE: Generated ${results.length} assignments ---`);
         return results;
     }
 
