@@ -18,6 +18,58 @@ interface SimulationState {
 export class PlanningService {
     private readonly TIME_STEP_MINUTES = 30; // 30 minute blocks
 
+    // Mock Data based on "Worker-Task algo data - Workers.csv"
+    private readonly WORKER_PREFERENCES: Record<string, Record<string, number>> = {
+        "Greydis Salguera": {
+            "Wall Batt insulation": 1, "Baffels and Blown In Insulation": 1, "Ceiling Rim Insulation": 1,
+            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 2, "Complete Roof 5/8\" OSB": 2,
+            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
+            "Complete Exterior R-Max": 3, "Tape and install windows": 4
+        },
+        "Angel Rodriguez": {
+            "Wall Batt insulation": 1, "Baffels and Blown In Insulation": 1, "Ceiling Rim Insulation": 1,
+            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 2, "Complete Roof 5/8\" OSB": 2,
+            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
+            "Complete Exterior R-Max": 3, "Tape and install windows": 4
+        },
+        "Jose Alfredo Galaviz": {
+            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
+            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
+            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
+            "Complete Exterior R-Max": 2, "Tape and install windows": 4
+        },
+        "Neudys Perez Santana": {
+            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
+            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
+            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
+            "Complete Exterior R-Max": 3, "Tape and install windows": 3
+        },
+        "Uriel Ruiz Cruz": {
+            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
+            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
+            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
+            "Complete Exterior R-Max": 3, "Tape and install windows": 3
+        },
+        "Carlos Lopez": {
+            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
+            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 3, "Complete Roof 5/8\" OSB": 3,
+            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
+            "Complete Exterior R-Max": 3, "Tape and install windows": 1
+        }
+    };
+
+    private getWorkerPreference(workerName: string, taskName: string): number {
+        // Default to 3 (Can Help) if not explicitly found, unless strict
+        const workerPrefs = this.WORKER_PREFERENCES[workerName];
+        if (!workerPrefs) return 3;
+
+        // Exact match
+        if (workerPrefs[taskName] !== undefined) return workerPrefs[taskName];
+
+        // Fuzzy match? (Optional, skipping for now as per strict requirement)
+        return 3;
+    }
+
     public plan(request: PlanRequest): WorkerTask[] {
         console.log('--- START PLANNING ---');
         const { workers, tasks, interval, useHistorical } = request;
@@ -116,17 +168,33 @@ export class PlanningService {
                 const max = task.maxWorkers || 100;
                 const min = task.minWorkers || 1;
 
-                // Filter eligible workers (Skills)
-                // Optimization: Prefer workers "already assigned" to this task (Continuity)
-                const eligible = availableWorkers.filter(w => this.hasSkills(w, task));
+                // Filter eligible workers (Skills AND Preferences)
+                const eligible = availableWorkers.filter(w => {
+                    // 1. Skill Check
+                    if (!this.hasSkills(w, task)) return false;
+
+                    // 2. Preference Check
+                    // If preference is 4 (CAN NOT HELP), exclude.
+                    const pref = this.getWorkerPreference(w.name || "", task.name || "");
+                    if (pref === 4) return false;
+
+                    return true;
+                });
 
                 // Sort eligible: 
-                // 1. Worker was working on this last step (Stickiness)
-                // 2. Skill ranking (Mocked here as simple "fits")
+                // 1. Preference Score (Ascending: 1 is best)
+                // 2. Worker was working on this last step (Stickiness)
                 eligible.sort((w1, w2) => {
+                    const pref1 = this.getWorkerPreference(w1.name || "", task.name || "");
+                    const pref2 = this.getWorkerPreference(w2.name || "", task.name || "");
+
+                    if (pref1 !== pref2) {
+                        return pref1 - pref2; // Lower is better
+                    }
+
                     const w1Active = item.assignedWorkers.has(w1.workerId) ? 1 : 0;
                     const w2Active = item.assignedWorkers.has(w2.workerId) ? 1 : 0;
-                    return w2Active - w1Active;
+                    return w2Active - w1Active; // Higher is better (Active first)
                 });
 
                 // Determine how many to assign
