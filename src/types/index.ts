@@ -8,6 +8,7 @@ export interface Worker {
     name?: string;
     skills: string[]; // Ordered by competence
     availability?: Interval; // Optional: restrict availability within the planning window
+    preferences?: Record<string, number>; // Optional: Override CSV preferences (Task Name -> Score)
 }
 
 export interface Task {

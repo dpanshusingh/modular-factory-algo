@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planner Verification UI</title>
+    <style>
+        body {
+            font-family: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #f4f6f8;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        textarea {
+            width: 100%;
+            height: 500px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            resize: vertical;
+        }
+
+        pre {
+            background: #fff;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: auto;
+            height: 500px;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🏭 Modular Factory: Planner Verification</h1>
+    <p>Modify the JSON request below (Workers/Tasks) and click "Generate Schedule" to test the algorithm live.</p>
+
+    <div class="container">
+        <div class="column">
+            <label for="fileInput">Upload Excel File (.xlsx)
+                <a href="/public/sample_simulation.xlsx" download style="font-size:0.8em; margin-left:10px;">[Download
+                    Sample]</a>
+            </label>
+            <input type="file" id="fileInput" accept=".xlsx" />
+
+            <!-- Optional Interval Overrides -->
+            <label>Start Time (Optional)</label>
+            <input type="text" id="startTime" value="2024-01-01T08:00:00Z" />
+
+            <label>End Time (Optional)</label>
+            <input type="text" id="endTime" value="2024-01-01T17:00:00Z" />
+
+            <button onclick="runPlan()">▶ Run Simulation from File</button>
+        </div>
+        <div class="column">
+            <label>Results</label>
+            <div id="resultsTable"></div>
+            <pre id="outputData" style="height: 200px; display:none;">Waiting...</pre>
+        </div>
+    </div>
+
+    <script>
+        async function runPlan() {
+            const btn = document.querySelector('button');
+            const fileInput = document.getElementById('fileInput');
+            const tableContainer = document.getElementById('resultsTable');
+            const out = document.getElementById('outputData');
+
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select an Excel file first.");
+                return;
+            }
+
+            try {
+                btn.textContent = 'Uploading & Simulating...';
+                btn.disabled = true;
+                tableContainer.innerHTML = '<p class="loading">Processing file...</p>';
+
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('startTime', document.getElementById('startTime').value);
+                formData.append('endTime', document.getElementById('endTime').value);
+
+                const response = await fetch('/api/v1/worker-tasks/plan-file', {
+                    method: 'POST',
+                    body: formData // No Content-Type header (browser sets multipart/form-data)
+                });
+
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json(); // { items: [...] }
+                const assignments = data.items || data;
+
+                // Render Table
+                let html = '<table border="1" cellpadding="5" cellspacing="0" style="width:100%; border-collapse:collapse;">';
+                html += '<tr style="background:#eee;"><th>Task</th><th>Worker</th><th>Start</th><th>End</th></tr>';
+
+                // Lookups (We don't have the full payload here easily, so use IDs if names missing)
+                // Actually, the response contains assignments. 
+                // Improvements: Return enriched assignments? Or just rely on IDs for now.
+                // The task/worker names MIGHT be lost in translation if I don't check.
+                // But my Previous UI used a Map from the INPUT payload. Here we don't have the input payload in JSON.
+                // However, the assignments rely on IDs.
+                // Wait, if I upload a file, the IDs are generated as w_1, t_1.
+                // The API response returns { workerId: "w_1", taskId: "t_1" ... }
+                // Use the IDs for now. Or request backend to return names?
+                // For "Robust Logic", names are better.
+                // Let's assume the user knows their data or I can try to pass names in response?
+                // The current API returns `WorkerTask[]`. 
+                // I will update the UI to just show IDs first. 
+
+                assignments.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+                assignments.forEach(a => {
+                    const formatTime = (iso) => {
+                        const d = new Date(iso);
+                        const hh = d.getUTCHours().toString().padStart(2, '0');
+                        const mm = d.getUTCMinutes().toString().padStart(2, '0');
+                        return `${hh}:${mm}`;
+                    };
+
+                    const start = formatTime(a.startDate);
+                    const end = formatTime(a.endDate);
+
+                    html += `<tr><td>${a.taskId}</td><td>${a.workerId}</td><td>${start}</td><td>${end}</td></tr>`;
+                });
+                html += '</table>';
+
+                tableContainer.innerHTML = html;
+                out.textContent = JSON.stringify(assignments, null, 2);
+
+            } catch (err) {
+                tableContainer.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+                out.textContent = err.stack || err;
+            } finally {
+                btn.textContent = '▶ Run Simulation from File';
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+
+</html>
