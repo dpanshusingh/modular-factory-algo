@@ -15,52 +15,28 @@ interface SimulationState {
     }>;
 }
 
+import { loadWorkerPreferences, WorkerPreferences } from '../utils/preferenceLoader';
+
 export class PlanningService {
     private readonly TIME_STEP_MINUTES = 30; // 30 minute blocks
+    private workerPreferences: WorkerPreferences;
 
-    // Mock Data based on "Worker-Task algo data - Workers.csv"
-    private readonly WORKER_PREFERENCES: Record<string, Record<string, number>> = {
-        "Greydis Salguera": {
-            "Wall Batt insulation": 1, "Baffels and Blown In Insulation": 1, "Ceiling Rim Insulation": 1,
-            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 2, "Complete Roof 5/8\" OSB": 2,
-            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
-            "Complete Exterior R-Max": 3, "Tape and install windows": 4
-        },
-        "Angel Rodriguez": {
-            "Wall Batt insulation": 1, "Baffels and Blown In Insulation": 1, "Ceiling Rim Insulation": 1,
-            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 2, "Complete Roof 5/8\" OSB": 2,
-            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
-            "Complete Exterior R-Max": 3, "Tape and install windows": 4
-        },
-        "Jose Alfredo Galaviz": {
-            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
-            "Complete Drywall Back Panel": 3, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
-            "Complete Exterior Fire Wall": 3, "Interior Tape / Mud 1st Coat": 3, "Interior Tape / Mud 2nd Coat": 3,
-            "Complete Exterior R-Max": 2, "Tape and install windows": 4
-        },
-        "Neudys Perez Santana": {
-            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
-            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
-            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
-            "Complete Exterior R-Max": 3, "Tape and install windows": 3
-        },
-        "Uriel Ruiz Cruz": {
-            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
-            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 1, "Complete Roof 5/8\" OSB": 1,
-            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
-            "Complete Exterior R-Max": 3, "Tape and install windows": 3
-        },
-        "Carlos Lopez": {
-            "Wall Batt insulation": 3, "Baffels and Blown In Insulation": 3, "Ceiling Rim Insulation": 3,
-            "Complete Drywall Back Panel": 4, "Complete Exterior OSB": 3, "Complete Roof 5/8\" OSB": 3,
-            "Complete Exterior Fire Wall": 4, "Interior Tape / Mud 1st Coat": 4, "Interior Tape / Mud 2nd Coat": 4,
-            "Complete Exterior R-Max": 3, "Tape and install windows": 1
+    constructor() {
+        // Load preferences from the CSV file relative to the project root
+        // Assuming the service is instantiated at runtime where CWD is project root
+        // or we use an absolute path. For now, we point to the known location.
+        try {
+            this.workerPreferences = loadWorkerPreferences('./Worker-Task algo data - Workers.csv');
+            console.log(`Loaded preferences for ${Object.keys(this.workerPreferences).length} workers.`);
+        } catch (error) {
+            console.error("Failed to load worker preferences:", error);
+            this.workerPreferences = {}; // Fallback
         }
-    };
+    }
 
     private getWorkerPreference(workerName: string, taskName: string): number {
         // Default to 3 (Can Help) if not explicitly found, unless strict
-        const workerPrefs = this.WORKER_PREFERENCES[workerName];
+        const workerPrefs = this.workerPreferences[workerName];
         if (!workerPrefs) return 3;
 
         // Exact match
