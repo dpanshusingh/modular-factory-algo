@@ -1,21 +1,35 @@
-# Use official Node.js image
-FROM node:18-slim
+# Use official Node.js 20 image (matching app.yaml)
+FROM node:20-slim
 
 # Create app directory
 WORKDIR /usr/src/app
 
-# Install app dependencies
-COPY package*.json ./
-RUN npm install --legacy-peer-deps
+# Install system dependencies (Prisma needs openssl)
+RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
-# Copy app source and CSV files
+# Install latest npm for reliability
+RUN npm install -g npm@latest
+
+# Copy dependency files
+COPY package*.json ./
+COPY client/package*.json ./client/
+
+# Install dependencies using clean install (ci) for reproducibility
+RUN npm ci --legacy-peer-deps
+RUN cd client && npm ci --legacy-peer-deps
+
+# Copy app source
 COPY . .
 
-# Skip build step (it fails due to type errors in other files)
-# RUN npm run build
+# Generate Prisma Client
+RUN npx prisma generate
 
-# Expose port (Cloud Run sets PORT env var, but typical defaults)
+# Build everything
+RUN npm run build
+RUN cd client && npm run build
+
+# Expose port
 EXPOSE 8080
 
-# Start command using ts-node to run directly without compilation check
-CMD [ "npx", "ts-node", "--transpile-only", "src/server.ts" ]
+# Start command
+CMD [ "node", "dist/server.js" ]

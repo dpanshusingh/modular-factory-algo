@@ -140,5 +140,5 @@ dataconnect/.firebase/
 dataconnect/.dataconnect/
 
 # Local documentation/scratchpad files
-calculating_*.md
-endpoint_*.md
+# calculating_*.md
+# endpoint_*.md

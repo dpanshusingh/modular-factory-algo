@@ -33,13 +33,14 @@ export function parseExcelData(buffer: Buffer): ParsedData {
                 const name = row['Name'];
                 if (!name) return;
 
-                const skillsStr = row['RankedSkills'] || "";
-                const skills = skillsStr.split(',').map((s: string) => s.trim()).filter((s: string) => s);
-
                 const preferences: Record<string, number> = {};
+                const shiftPreferenceRaw = row['ShiftPreference'] || row['Shift Preference'] || row['Shift'] || '';
+                const shiftPreference = typeof shiftPreferenceRaw === 'string'
+                    ? shiftPreferenceRaw.trim()
+                    : (shiftPreferenceRaw || '').toString().trim();
 
                 Object.keys(row).forEach(key => {
-                    if (key !== 'Name' && key !== 'RankedSkills') {
+                    if (key !== 'Name' && key !== 'RankedSkills' && key !== 'Skills') {
                         const val = parseInt(row[key]);
                         if (!isNaN(val)) {
                             preferences[key] = val;
@@ -50,7 +51,7 @@ export function parseExcelData(buffer: Buffer): ParsedData {
                 workers.push({
                     workerId: `w_${index + 1}`,
                     name: name,
-                    skills: skills,
+                    shiftPreference: shiftPreference || undefined,
                     preferences: preferences
                 });
             });
@@ -74,18 +75,54 @@ export function parseExcelData(buffer: Buffer): ParsedData {
             const rows: any[] = XLSX.utils.sheet_to_json(tasksSheet, { range: headerRowIndex });
 
             rows.forEach((row, index) => {
-                const name = row['TaskName'];
-                if (!name) return;
+                const nameRaw = row['TaskName'];
+                if (!nameRaw) return;
+                const name = String(nameRaw).trim();
 
+                // Map ShiftPreference column (1/2/3 or text) to shiftCompletionPreference
+                const shiftPrefRaw = row['ShiftPreference'] || row['Shift Preference'];
+                let shiftCompletionPreference: 'mustCompleteWithinShift' | 'prefersCompleteWithinShift' | 'doesNotMatter' | undefined = undefined;
+                if (shiftPrefRaw !== undefined && shiftPrefRaw !== null && `${shiftPrefRaw}`.trim() !== '') {
+                    const prefNum = Number(shiftPrefRaw);
+                    if (prefNum === 3) {
+                        shiftCompletionPreference = 'mustCompleteWithinShift';
+                    } else if (prefNum === 2) {
+                        shiftCompletionPreference = 'prefersCompleteWithinShift';
+                    } else if (prefNum === 1) {
+                        shiftCompletionPreference = 'doesNotMatter';
+                    }
+                }
+
+                const isNonWorkerRaw = row['Is non-worker task'];
+                const isNonWorker = isNonWorkerRaw === 1 || isNonWorkerRaw === '1';
+                const nonWorkerDurationRaw = Number(row['Non-worker duration']);
+                const nonWorkerTaskDuration = !isNaN(nonWorkerDurationRaw) ? nonWorkerDurationRaw : undefined;
+
+                let taskType: 'default' | 'subassembly' | 'nonWorker' | undefined;
+                if (isNonWorker) {
+                    taskType = 'nonWorker';
+                }
+
+                const minWorkersRaw = Number(row['MinWorkers']);
+                const maxWorkersRaw = Number(row['MaxWorkers']);
+                // Default to 1 only if NaN (missing/invalid), but allow 0
+                const minWorkers = !isNaN(minWorkersRaw) ? minWorkersRaw : 1;
+                const maxWorkers = !isNaN(maxWorkersRaw) ? maxWorkersRaw : 1;
+                const laborHours = Number(row['LaborHoursRemaining']) || 0;
+                const totalHours = isNonWorker && nonWorkerTaskDuration !== undefined
+                    ? nonWorkerTaskDuration
+                    : laborHours;
                 tasks.push({
                     taskId: `t_${index + 1}`,
                     name: name,
-                    estimatedTotalLaborHours: Number(row['LaborHoursRemaining']) || 0,
-                    estimatedRemainingLaborHours: Number(row['LaborHoursRemaining']) || 0,
-                    requiredSkills: row['RequiredSkills'] ? row['RequiredSkills'].split(',').map((s: string) => s.trim()) : [],
-                    minWorkers: Number(row['MinWorkers']) || 1,
-                    maxWorkers: Number(row['MaxWorkers']) || 1,
-                    prerequisiteTaskIds: []
+                    estimatedTotalLaborHours: totalHours,
+                    estimatedRemainingLaborHours: totalHours,
+                    minWorkers: minWorkers,
+                    maxWorkers: maxWorkers,
+                    prerequisiteTaskIds: [],
+                    shiftCompletionPreference,
+                    taskType: taskType,
+                    nonWorkerTaskDuration: isNonWorker ? nonWorkerTaskDuration : undefined
                 });
             });
 
@@ -93,7 +130,7 @@ export function parseExcelData(buffer: Buffer): ParsedData {
             const taskNameMap = new Map(tasks.map(t => [t.name, t.taskId]));
             rows.forEach((row, index) => {
                 if (row['PrerequisiteTask']) {
-                    const prereqName = row['PrerequisiteTask'];
+                    const prereqName = String(row['PrerequisiteTask']).trim();
                     const prereqId = taskNameMap.get(prereqName);
                     if (prereqId && tasks[index]) {
                         tasks[index].prerequisiteTaskIds = [prereqId];

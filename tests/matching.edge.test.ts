@@ -5,8 +5,8 @@ describe('MatchingService - edge cases', () => {
     const svc = new MatchingService();
 
     it('splits demand when supply partially overlaps (creates assignment + unassigned remainder)', () => {
-        const workers: Worker[] = [ { workerId: 'W1', skills: ['General'] } ];
-        const tasks: Task[] = [ { taskId: 'T1', requiredSkills: ['General'] } ];
+        const workers: Worker[] = [{ workerId: 'W1', skills: ['General'] }];
+        const tasks: Task[] = [{ taskId: 'T1', requiredSkills: ['General'] }];
 
         const workerTasks: WorkerTask[] = [
             // supply: W1 available 8-10
@@ -30,8 +30,8 @@ describe('MatchingService - edge cases', () => {
     });
 
     it('leaves demand unassigned when no worker has required skills', () => {
-        const workers: Worker[] = [ { workerId: 'W1', skills: ['Carpentry'] } ];
-        const tasks: Task[] = [ { taskId: 'T1', requiredSkills: ['Plumbing'] } ];
+        const workers: Worker[] = [{ workerId: 'W1', skills: ['Carpentry'] }];
+        const tasks: Task[] = [{ taskId: 'T1', requiredSkills: ['Plumbing'] }];
 
         const workerTasks: WorkerTask[] = [
             { workerId: 'W1', taskId: null, startDate: '2025-01-01T08:00:00Z', endDate: '2025-01-01T12:00:00Z' },
@@ -40,7 +40,7 @@ describe('MatchingService - edge cases', () => {
 
         const results = svc.match(workers, tasks, workerTasks);
 
-        const unassigned = results.find(r => r.workerId === null && r.taskId === 'T1');
+        const unassigned = results.find((r: WorkerTask) => r.workerId === null && r.taskId === 'T1');
         expect(unassigned).toBeDefined();
         expect(unassigned!.startDate).toBe('2025-01-01T09:00:00.000Z');
         expect(unassigned!.endDate).toBe('2025-01-01T11:00:00.000Z');

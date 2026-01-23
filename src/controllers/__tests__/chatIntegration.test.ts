@@ -18,6 +18,20 @@ jest.mock('../../middlewares/rateLimiter', () => ({
 // Mock External Services (RAG/LLM)
 jest.mock('../../services/rag/retriever');
 jest.mock('../../config/llmConfig');
+jest.mock('../../services/rag/session-manager-dataconnect', () => ({
+    getOrCreateSession: jest.fn().mockResolvedValue({
+        id: '123e4567-e89b-12d3-a456-426614174000',
+        messages: [],
+        metadata: {},
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        expiresAt: new Date(Date.now() + 86400000)
+    }),
+    addMessageToSession: jest.fn().mockResolvedValue(undefined),
+    getConversationHistory: jest.fn().mockResolvedValue([
+        { role: 'user', content: 'Hello', timestamp: new Date().toISOString() }
+    ])
+}));
 
 const app = express();
 app.use(express.json());
@@ -63,6 +77,9 @@ describe('Chat Integration (In-Memory)', () => {
             .post('/api/chat')
             .send({ message: 'Follow up', sessionId });
 
+        if (res2.status !== 200) {
+            console.error('Test failed with status:', res2.status, 'Body:', JSON.stringify(res2.body, null, 2));
+        }
         expect(res2.status).toBe(200);
         expect(res2.body.data.sessionId).toBe(sessionId);
     });

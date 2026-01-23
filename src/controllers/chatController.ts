@@ -10,7 +10,7 @@ import {
 } from "../services/rag/session-manager-dataconnect";
 import { getLLMConfig, createLLM } from "../config/llmConfig";
 import { parsePDFFile, validatePDFFile } from "../services/rag/pdf-parser";
-import { SystemMessage, HumanMessage, AIMessage } from "langchain";
+import { SystemMessage, HumanMessage, AIMessage } from "@langchain/core/messages";
 
 const RETRIEVAL_TOP_K = parseInt(process.env.RETRIEVAL_TOP_K || "10", 10);
 
@@ -248,7 +248,7 @@ export const getChatHistory = async (
     console.log(`📜 Fetching chat history for session: ${sessionId}`);
 
     // Get conversation history from session manager
-    const messages = await getConversationHistory(sessionId);
+    const messages = await getConversationHistory(sessionId as string);
 
     const apiResponse: ApiResponse = {
       success: true,

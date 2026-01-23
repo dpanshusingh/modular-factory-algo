@@ -23,7 +23,7 @@ export const retrieveContext = async (
 
     // Build context string from retrieved chunks with proper XML delimitation
     const chunks = relevantDocs
-      .map((doc, index) => {
+      .map((doc: any, index: number) => {
         const chunkNumber = index + 1;
         const source = doc.metadata?.filename || 'Unknown';
         return `<chunk_${chunkNumber} source="${source}">
@@ -42,10 +42,10 @@ ${chunks}
     const sourceDocuments = Array.from(
       new Set(
         relevantDocs
-          .map((doc) => doc.metadata?.filename as string)
+          .map((doc: any) => doc.metadata?.filename as string)
           .filter(Boolean)
       )
-    );
+    ) as string[];
 
     console.log(`📄 Retrieved ${relevantDocs.length} chunks from ${sourceDocuments.length} sources`);
 
