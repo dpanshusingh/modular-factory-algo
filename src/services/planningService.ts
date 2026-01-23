@@ -1,39 +1,68 @@
 import { Worker, Task, WorkerTask, PlanRequest } from '../types';
 import { parseDate } from '../utils/timeUtils';
+import { computeEstimatedTotalLaborHours } from '../utils/estimation';
+import { resolveSchedulingConfig } from '../utils/schedulingConfig';
+import { BalancingService } from './balancingService';
+import { ResourceManager } from './resourceManager';
 
 interface SimulationState {
     tasks: Map<string, {
         task: Task;
         remainingHours: number;
         isComplete: boolean;
-        assignedWorkers: Set<string>; // WorkerIds currently assigned (context switching optimization)
+        assignedWorkers: Set<string>;
+        criticalPathScore: number; // Higher = More Critical
+        waitStartTime?: number; // For Wait Tasks: when did the wait begin?
     }>;
-    workers: Map<string, {
-        worker: Worker;
-        busyUntil: number; // Timestamp
-    }>;
+    // Workers state removed (Source of Truth is ResourceManager)
 }
 
 export class PlanningService {
-    private readonly TIME_STEP_MINUTES = 30; // 30 minute blocks
+    private readonly COMPLETION_EPSILON_HOURS = 0.0001; // Avoid floating-point leftovers
+    private balancingService: BalancingService;
 
-    public plan(request: PlanRequest): WorkerTask[] {
-        const { workers, tasks, interval, useHistorical } = request;
+    constructor() {
+        this.balancingService = new BalancingService('./Worker-Task algo data - Workers.csv');
+    }
+
+    public plan(request: PlanRequest, options?: {
+        reassignmentPenalty?: number;
+        seedAssignments?: WorkerTask[];
+    }): any[] {
+        console.log('--- START PLANNING ---');
+        const { workers, tasks, interval, useHistorical, workBudgetHours } = request;
+        const scheduling = resolveSchedulingConfig(request.scheduling);
+        console.log(`Inputs: ${workers.length} workers, ${tasks.length} tasks`);
+
+        if (options?.reassignmentPenalty) {
+            console.log(`Preference: Reassignment Penalty = ${options.reassignmentPenalty}`);
+        }
+
         const startTimeVals = parseDate(interval.startTime).getTime();
         const endTimeVals = parseDate(interval.endTime).getTime();
 
         // 1. Initialize Estimates
         tasks.forEach(t => {
-            // Mock calculation logic as per spec
+            const nonWorkerDuration = this.getNonWorkerDurationHours(t);
+            if (nonWorkerDuration !== undefined) {
+                t.estimatedTotalLaborHours = nonWorkerDuration;
+            }
             if (t.estimatedTotalLaborHours === undefined) {
-                // If useHistorical, maybe it's lower? Mock: 
-                const base = t.minWorkers ? t.minWorkers * 4 : 4;
-                t.estimatedTotalLaborHours = useHistorical ? base * 0.9 : base;
+                const computed = computeEstimatedTotalLaborHours(t);
+                if (typeof computed === 'number') {
+                    t.estimatedTotalLaborHours = computed;
+                } else {
+                    const base = t.minWorkers ? t.minWorkers * 4 : 4;
+                    t.estimatedTotalLaborHours = useHistorical ? base * 0.9 : base;
+                }
             }
             if (t.estimatedRemainingLaborHours === undefined) {
                 t.estimatedRemainingLaborHours = t.estimatedTotalLaborHours;
             }
         });
+
+        // 2a. Calculate Critical Path Scores (Topological Analysis)
+        const criticalPathScores = this.calculateCriticalPathScores(tasks);
 
         // 2. Setup Simulation State
         const state: SimulationState = {
@@ -41,121 +70,335 @@ export class PlanningService {
                 task: t,
                 remainingHours: t.estimatedRemainingLaborHours!,
                 isComplete: t.estimatedRemainingLaborHours! <= 0,
-                assignedWorkers: new Set()
-            }])),
-            workers: new Map(workers.map(w => [w.workerId, {
-                worker: w,
-                busyUntil: startTimeVals
+                assignedWorkers: new Set(),
+                criticalPathScore: criticalPathScores.get(t.taskId) || 0
             }]))
         };
 
-        const results: WorkerTask[] = [];
-        const stepMs = this.TIME_STEP_MINUTES * 60 * 1000;
+        const resourceManager = new ResourceManager(scheduling.transitionGapMs); // New Source of Truth
 
-        // 3. Time Loop
-        let currentTime = startTimeVals;
-
-        while (currentTime < endTimeVals) {
-            if (this.allTasksComplete(state)) break;
-
-            // Identify Available Workers at this slice
-            const availableWorkers = workers.filter(w => {
-                const wState = state.workers.get(w.workerId)!;
-                if (wState.busyUntil > currentTime) return false;
-
-                // Check Explicit Availability
-                if (w.availability) {
-                    const availStart = parseDate(w.availability.startTime).getTime();
-                    const availEnd = parseDate(w.availability.endTime).getTime();
-                    if (currentTime < availStart || currentTime >= availEnd) return false;
-                }
-
-                return true;
-            });
-
-            // Identify Ready Tasks
-            const readyTasks = this.getReadyTasks(state, currentTime);
-
-            // Sort Tasks (Heuristic: Longest Remaining Work First -> effectively Critical Pathish)
-            // Also prioritize tasks that have 'minWorkers' to meet urgency?
-            // Optimization: "Focus on finishing tasks". 
-            readyTasks.sort((a, b) => b.remainingHours - a.remainingHours);
-
-            // Assign Process
-            for (const item of readyTasks) {
-                const { task, remainingHours } = item; // item is the state object
-
-                if (availableWorkers.length === 0) break;
-
-                // Requirements
-                const max = task.maxWorkers || 100;
-                const min = task.minWorkers || 1;
-
-                // Filter eligible workers (Skills)
-                // Optimization: Prefer workers "already assigned" to this task (Continuity)
-                const eligible = availableWorkers.filter(w => this.hasSkills(w, task));
-
-                // Sort eligible: 
-                // 1. Worker was working on this last step (Stickiness)
-                // 2. Skill ranking (Mocked here as simple "fits")
-                eligible.sort((w1, w2) => {
-                    const w1Active = item.assignedWorkers.has(w1.workerId) ? 1 : 0;
-                    const w2Active = item.assignedWorkers.has(w2.workerId) ? 1 : 0;
-                    return w2Active - w1Active;
-                });
-
-                // Determine how many to assign
-                // We WANT to assign up to MAX to finish early (Optimization Strategy)
-                // But we MUST assign at least MIN if we start it? 
-                // If we can't meet MIN, strict scheduling might overlap. 
-                // For this prompt, let's do "Best Effort" filling.
-
-                let assignedCount = 0;
-                const assignedWids: string[] = [];
-
-                for (const worker of eligible) {
-                    if (assignedCount >= max) break;
-
-                    // Assign
-                    assignedCount++;
-                    assignedWids.push(worker.workerId);
-
-                    // Update Worker State
-                    const wState = state.workers.get(worker.workerId)!;
-                    wState.busyUntil = currentTime + stepMs;
-
-                    // Record Output
-                    const endDate = Math.min(currentTime + stepMs, endTimeVals);
-                    results.push({
-                        workerId: worker.workerId,
-                        taskId: task.taskId,
-                        startDate: new Date(currentTime).toISOString(),
-                        endDate: new Date(endDate).toISOString()
-                    });
-
-                    // Remove from available for this step
-                    const index = availableWorkers.indexOf(worker);
-                    if (index > -1) availableWorkers.splice(index, 1);
-                }
-
-                // Update Task State
-                // Labor accomplished: assignedCount * (step in hours)
-                const laborDone = assignedCount * (this.TIME_STEP_MINUTES / 60);
-                item.remainingHours -= laborDone;
-
-                // Track who is working for continuity next step
-                item.assignedWorkers = new Set(assignedWids);
-
-                if (item.remainingHours <= 0) {
-                    item.isComplete = true;
-                    item.remainingHours = 0;
-                }
-            }
-
-            currentTime += stepMs;
+        // --- SEED ASSIGNMENTS FOR STABILITY ---
+        if (options?.seedAssignments) {
+            console.log(`Seeding ${options.seedAssignments.length} previous assignments`);
+            options.seedAssignments.forEach(a => resourceManager.addAssignment(a));
         }
 
-        return results;
+        const rawSteps: any[] = [];
+        const stepMs = scheduling.timeStepMinutes * 60 * 1000;
+        let currentTime = startTimeVals;
+        const lastAssignedTask = new Map<string, string>();
+        let remainingBudgetMs = typeof workBudgetHours === 'number'
+            ? Math.max(0, Math.floor((workBudgetHours * 60 * 60 * 1000) / stepMs) * stepMs)
+            : undefined;
+
+        // 2b. Pre-calculate Reverse Dependencies (How many tasks depend on me?)
+        const dependentCounts = new Map<string, number>();
+        tasks.forEach(t => {
+            if (t.prerequisiteTaskIds) {
+                t.prerequisiteTaskIds.forEach(prereqId => {
+                    const current = dependentCounts.get(prereqId) || 0;
+                    dependentCounts.set(prereqId, current + 1);
+                });
+            }
+        });
+
+        // 3. Phase-Based Execution
+        // Define Phases dynamically or statically? For V2, static split is fine.
+        // Phase 1: Morning Push (First 4 hours)
+        // Phase 2: Afternoon Continuation (Rest of day)
+
+        const phases = [
+            {
+                name: "Phase 1: Morning Push - Critical Path Focus",
+                startTime: startTimeVals,
+                endTime: startTimeVals + (4 * 60 * 60 * 1000), // 4 Hours
+                strategy: "CRITICAL_PATH_FOCUS"
+            },
+            {
+                name: "Phase 2: Afternoon Continuation - Balanced Flow",
+                startTime: startTimeVals + (4 * 60 * 60 * 1000),
+                endTime: endTimeVals,
+                strategy: "BALANCED"
+            }
+        ];
+
+        for (const phase of phases) {
+            console.log(`--- Starting ${phase.name} ---`);
+
+            // Skip phases entirely in past
+            if (phase.endTime <= startTimeVals) continue;
+
+            // Adjust start time if mid-phase
+            const phaseStart = Math.max(phase.startTime, startTimeVals);
+
+            // Inject Narrative Comment
+            rawSteps.push({
+                comment: `--- ${phase.name} ---`,
+                startDate: new Date(phaseStart).toISOString(),
+                endDate: new Date(phaseStart).toISOString(), // Dummy end for type safety
+                type: 'comment'
+            });
+
+            let currentTime = phaseStart;
+            while (currentTime < phase.endTime) {
+                if (this.allTasksComplete(state)) {
+                    break;
+                }
+                if (currentTime >= endTimeVals) {
+                    break;
+                }
+
+                const stepStart = new Date(currentTime).toISOString();
+                const stepEndTs = currentTime + stepMs;
+                const stepEnd = new Date(stepEndTs).toISOString();
+
+                // A. Identify Ready Tasks
+                const readyTasks = this.getReadyTasks(state, currentTime);
+
+                // A-1. Handle Wait Tasks (Non-Labor)
+                // Filter ready tasks to find those that are NON-WORKER (Wait Tasks)
+                // LOOP: We iterate because completing one wait task might unblock another wait task immediately.
+                let waitCheckPass = 0;
+                const recordedWaitTasks = new Set<string>(); // Prevent duplicate assignment records per step
+
+                while (waitCheckPass < 10) { // Safety cap
+                    const currentReadyTasks = this.getReadyTasks(state, currentTime);
+                    const waitTasks = currentReadyTasks.filter(item =>
+                        this.isNonWorkerTask(item.task) && !state.tasks.get(item.task.taskId)?.isComplete
+                    );
+
+                    if (waitTasks.length === 0) break; // No work to do
+
+                    let progressMade = false;
+
+                    waitTasks.forEach(item => {
+                        const tState = state.tasks.get(item.task.taskId);
+                        if (!tState) return;
+
+                        // Start the wait if not started
+                        if (tState.waitStartTime === undefined) {
+                            tState.waitStartTime = currentTime;
+                        }
+
+                        // Check completion
+                        const durationMs = this.getTaskDurationHours(tState.task) * 60 * 60 * 1000;
+                        const elapsed = currentTime - tState.waitStartTime;
+
+                        if (elapsed >= durationMs) {
+                            tState.isComplete = true;
+                            tState.remainingHours = 0;
+                            // Mark progress to trigger another pass
+                            progressMade = true;
+                        } else {
+                            // Decrease remaining hours for display/tracking
+                            const remainingMs = Math.max(0, durationMs - elapsed);
+                            tState.remainingHours = remainingMs / (1000 * 60 * 60);
+
+                            // Record wait activity
+                            if (!tState.isComplete) {
+                                if (!recordedWaitTasks.has(item.task.taskId)) {
+                                    rawSteps.push({
+                                        startDate: new Date(currentTime).toISOString(),
+                                        endDate: new Date(currentTime + stepMs).toISOString(),
+                                        type: 'assignment',
+                                        workerId: null, // No worker
+                                        taskId: item.task.taskId,
+                                        taskName: item.task.name,
+                                        isWaitTask: true
+                                    });
+                                    recordedWaitTasks.add(item.task.taskId);
+                                }
+                            }
+                        }
+                    });
+
+                    if (!progressMade) break; // Nothing completed, so no new tasks will become ready
+                    waitCheckPass++;
+                }
+
+                // FIX: Re-check for newly ready tasks after wait task completion
+                // This ensures tasks dependent on wait tasks (e.g., "2nd Coat" after "Dry Time")
+                // can start immediately in the same time step when their prerequisite completes.
+                const updatedReadyTasks = this.getReadyTasks(state, currentTime);
+                const laborTasks = updatedReadyTasks.filter(item => !this.isNonWorkerTask(item.task));
+
+                // B. Filter Workers (Global Availability)
+                const shiftAvailableWorkers = workers.filter(w => {
+                    if (!w.availability) return true;
+
+                    let intervals = Array.isArray(w.availability) ? w.availability : [w.availability];
+
+                    // Check if currentTime is within ANY valid interval
+                    const isAvailable = intervals.some(iv => {
+                        const start = parseDate(iv.startTime).getTime();
+                        const end = parseDate(iv.endTime).getTime();
+                        // If times are invalid, assume available? No, safe to assume unavailable if explicit window broken.
+                        if (isNaN(start) || isNaN(end)) return false;
+                        return currentTime >= start && currentTime < end;
+                    });
+
+                    return isAvailable;
+                });
+
+                // C. Prioritize Tasks based on Phase Strategy
+                // Strategy: CRITICAL_PATH_FOCUS -> Sort by CriticalPathScore DESC
+                // FIX: Deduct "committed future work" from remainingHours
+                const prioritizedTasks = laborTasks.map(item => {
+                    // Calculate work already scheduled for this task that extends past currentTime
+                    // This represents workers who are ALREADY assigned and will contribute work
+                    const allAssignments = resourceManager.getAllAssignments().filter(a => a.taskId === item.task.taskId);
+                    let committedFutureWork = 0;
+                    for (const a of allAssignments) {
+                        const aStart = new Date(a.startDate).getTime();
+                        const aEnd = new Date(a.endDate).getTime();
+
+                        // Only count the portion of the assignment that is AFTER currentTime
+                        if (aEnd > currentTime) {
+                            const futureStart = Math.max(currentTime, aStart);
+                            const futureDurationMs = aEnd - futureStart;
+                            committedFutureWork += futureDurationMs / (1000 * 60 * 60);
+                        }
+                    }
+
+                    // Effective remaining = state remaining - already committed work
+                    const effectiveRemaining = Math.max(0, item.remainingHours - committedFutureWork);
+
+                    return {
+                        ...item,
+                        remainingHours: effectiveRemaining, // OVERRIDE with adjusted value
+                        dependentCount: dependentCounts.get(item.task.taskId) || 0,
+                        criticalPathScore: state.tasks.get(item.task.taskId)?.criticalPathScore || 0
+                    };
+                });
+
+                // Sort
+                prioritizedTasks.sort((a, b) => {
+                    // V2 Logic: Critical Path Score (High) > Completion Urgency > Dependent Count > Remaining
+
+                    if (phase.strategy === "CRITICAL_PATH_FOCUS") {
+                        // Weighted Sort: CP Score is dominant
+                        if (b.criticalPathScore !== a.criticalPathScore) {
+                            return b.criticalPathScore - a.criticalPathScore;
+                        }
+                    }
+
+                    // NEW: Completion Urgency - prioritize tasks close to finishing OR not yet started
+                    // This ensures small/medium tasks don't get starved by large tasks
+                    const totalA = a.task.estimatedTotalLaborHours || 1;
+                    const totalB = b.task.estimatedTotalLaborHours || 1;
+                    const progressA = 1 - (a.remainingHours / totalA); // 0 = not started, 1 = done
+                    const progressB = 1 - (b.remainingHours / totalB);
+
+                    // Boost: Tasks partially done (30-90%) should finish first
+                    // Also boost: Tasks not started at all (0%) to ensure they get attention
+                    const urgencyA = progressA > 0.3 ? progressA : (progressA === 0 ? 0.5 : progressA);
+                    const urgencyB = progressB > 0.3 ? progressB : (progressB === 0 ? 0.5 : progressB);
+
+                    if (Math.abs(urgencyA - urgencyB) > 0.1) {
+                        return urgencyB - urgencyA; // Higher urgency first
+                    }
+
+                    // Fallback / Balanced Sort
+                    if (b.dependentCount !== a.dependentCount) return b.dependentCount - a.dependentCount;
+                    return b.remainingHours - a.remainingHours;
+                });
+
+                // D. Balance
+                let assignment: { results: WorkerTask[]; taskProgress: Map<string, number>; budgetUsedMs?: number } = { results: [], taskProgress: new Map<string, number>(), budgetUsedMs: 0 };
+                if (remainingBudgetMs !== undefined && remainingBudgetMs < stepMs) {
+                    remainingBudgetMs = 0;
+                }
+                if (remainingBudgetMs === undefined || remainingBudgetMs > 0) {
+                    assignment = this.balancingService.balance(
+                        currentTime,
+                        stepMs,
+                        shiftAvailableWorkers,
+                        prioritizedTasks,
+                        resourceManager,
+                        endTimeVals,
+                        remainingBudgetMs,
+                        {
+                            reassignmentPenalty: options?.reassignmentPenalty,
+                            minAssignmentMinutes: scheduling.minAssignmentMinutes
+                        } // Pass Penalty + Scheduling
+                    );
+                }
+
+                // E. Record Results
+                assignment.results.forEach(res => {
+                    const tState = state.tasks.get(res.taskId!);
+                    rawSteps.push({
+                        startDate: res.startDate, // Revert to internal key
+                        endDate: res.endDate,     // Revert to internal key
+                        type: 'assignment',
+                        workerId: res.workerId,
+                        taskId: res.taskId,
+                        taskName: tState?.task.name,
+                        // Optionally add comment to assignment if interesting?
+                    });
+                });
+                if (remainingBudgetMs !== undefined) {
+                    remainingBudgetMs = Math.max(0, remainingBudgetMs - (assignment.budgetUsedMs || 0));
+                }
+
+                // F. Update Progress (Using ACTUAL assignment durations, not step duration)
+                const stepStartMs = currentTime;
+                const stepEndMs = currentTime + stepMs;
+
+                state.tasks.forEach((tState, taskId) => {
+                    if (tState.isComplete) return;
+
+                    // Get all assignments for this task that overlap with the current step
+                    const taskAssignments = resourceManager.getAssignmentsByTime(stepStartMs, stepEndMs)
+                        .filter(a => a.taskId === taskId);
+
+                    if (taskAssignments.length > 0) {
+                        // Calculate actual hours done by summing overlap durations
+                        let hoursDone = 0;
+                        for (const a of taskAssignments) {
+                            const aStart = new Date(a.startDate).getTime();
+                            const aEnd = new Date(a.endDate).getTime();
+
+                            // Calculate overlap with current step
+                            const overlapStart = Math.max(stepStartMs, aStart);
+                            const overlapEnd = Math.min(stepEndMs, aEnd);
+                            const overlapMs = Math.max(0, overlapEnd - overlapStart);
+
+                            hoursDone += overlapMs / (1000 * 60 * 60);
+                        }
+
+                        tState.remainingHours -= hoursDone;
+
+                        if (tState.remainingHours <= this.COMPLETION_EPSILON_HOURS) {
+                            tState.isComplete = true;
+                            tState.remainingHours = 0;
+                        }
+                    }
+                });
+
+                // G. Record Idle/Unassigned (Optional for V2 Story, but good for debug)
+                // Skipping "worker_idle" spam to keep narrative clean? 
+                // User asked for "Mixed list of Assignment objects and Comment objects".
+                // Let's keep IDLE out unless requested? User didn't explicitly ban it, but "Minimalist Planner" implies clean.
+                // Keeping it for now for chart visualization safety.
+
+                shiftAvailableWorkers.forEach(w => {
+                    if (!resourceManager.isBooked(w.workerId, currentTime, currentTime + stepMs)) {
+                        rawSteps.push({
+                            startDate: stepStart,
+                            endDate: stepEnd,
+                            type: 'worker_idle',
+                            workerId: w.workerId
+                        });
+                    }
+                });
+
+                currentTime += stepMs;
+            }
+        }
+
+        console.log(`--- PLANNING COMPLETE: Generated ${rawSteps.length} steps ---`);
+        return rawSteps;
     }
 
     private allTasksComplete(state: SimulationState): boolean {
@@ -166,13 +409,13 @@ export class PlanningService {
         const incomplete = Array.from(state.tasks.values()).filter(t => !t.isComplete);
 
         return incomplete.filter(item => {
-            // 1. Check Earliest Start Date
+            // Check Start Date
             if (item.task.earliestStartDate) {
                 const start = parseDate(item.task.earliestStartDate).getTime();
                 if (time < start) return false;
             }
 
-            // 2. Check Prerequisites
+            // Check Prerequisites
             if (item.task.prerequisiteTaskIds && item.task.prerequisiteTaskIds.length > 0) {
                 const allPrereqsDone = item.task.prerequisiteTaskIds.every(pid => {
                     const pState = state.tasks.get(pid);
@@ -180,14 +423,80 @@ export class PlanningService {
                 });
                 if (!allPrereqsDone) return false;
             }
-
             return true;
         });
     }
 
-    private hasSkills(worker: Worker, task: Task): boolean {
-        if (!task.requiredSkills || task.requiredSkills.length === 0) return true;
-        const workerSkills = new Set(worker.skills);
-        return task.requiredSkills.every(req => workerSkills.has(req));
+    /**
+     * Calculates the "Longest Path to Completion" for each task.
+     * Score = TaskDuration + Max(ChildrenScores)
+     */
+    private calculateCriticalPathScores(tasks: Task[]): Map<string, number> {
+        const scores = new Map<string, number>();
+        const taskMap = new Map(tasks.map(t => [t.taskId, t]));
+
+        // Build Adjacency List (Parent -> Children)
+        const childrenMap = new Map<string, string[]>();
+        tasks.forEach(t => {
+            if (t.prerequisiteTaskIds) {
+                t.prerequisiteTaskIds.forEach(parentId => {
+                    if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
+                    childrenMap.get(parentId)!.push(t.taskId);
+                });
+            }
+        });
+
+        // Memoized Recursive Calc with cycle guard to avoid stack overflows
+        const visiting = new Set<string>();
+        const getScore = (taskId: string): number => {
+            if (scores.has(taskId)) return scores.get(taskId)!;
+            if (visiting.has(taskId)) {
+                // Cycle detected; break the loop with a minimal score contribution
+                return 0;
+            }
+            visiting.add(taskId);
+
+            const task = taskMap.get(taskId);
+            if (!task) {
+                visiting.delete(taskId);
+                return 0;
+            }
+
+            const duration = this.getTaskDurationHours(task);
+            const children = childrenMap.get(taskId) || [];
+
+            let maxChildScore = 0;
+            if (children.length > 0) {
+                maxChildScore = Math.max(...children.map(childId => getScore(childId)));
+            }
+
+            const totalScore = duration + maxChildScore;
+            scores.set(taskId, totalScore);
+            visiting.delete(taskId);
+            return totalScore;
+        };
+
+        // Calculate for all
+        tasks.forEach(t => getScore(t.taskId));
+
+        return scores;
+    }
+
+    private isNonWorkerTask(task: Task): boolean {
+        return task.taskType === 'nonWorker'
+            || (task.minWorkers === 0 && task.maxWorkers === 0);
+    }
+
+    private getNonWorkerDurationHours(task: Task): number | undefined {
+        if (!this.isNonWorkerTask(task)) return undefined;
+        if (typeof task.nonWorkerTaskDuration !== 'number') return undefined;
+        if (!Number.isFinite(task.nonWorkerTaskDuration)) return undefined;
+        return task.nonWorkerTaskDuration;
+    }
+
+    private getTaskDurationHours(task: Task): number {
+        const nonWorkerDuration = this.getNonWorkerDurationHours(task);
+        if (nonWorkerDuration !== undefined) return nonWorkerDuration;
+        return task.estimatedTotalLaborHours || 0;
     }
 }
